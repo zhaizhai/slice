@@ -1,0 +1,31 @@
+#!/bin/bash
+
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+proj_root_dir=$script_dir
+compiled_js_dir=${script_dir}/compiled_js
+# jquery_filename="jquery-1.9.1.min.js"
+
+function compile {
+    coffee scripts/build.coffee
+}
+
+start_time=$(date "+%s.%N")
+
+function checkpoint {
+    # argument is a format string with one float
+    now=$(date "+%s.%N")
+    elapsed_seconds=`echo "$now - $start_time" | bc`
+    start_time=$now
+    printf "$1\n" $elapsed_seconds
+}
+
+set -e
+
+# ./scripts/compile_resources.py ${proj_root_dir}/res/ > ${compiled_js_dir}/resources.js
+# checkpoint "Compiled resources (%.3fs)"
+# res_size=`stat -c "%s" ${compiled_js_dir}/resources.js`
+# printf "Resources size: $res_size bytes\n"
+compile > ${compiled_js_dir}/main.js
+# checkpoint "Compiled coffeescript (%.3fs)"
+
+set +e

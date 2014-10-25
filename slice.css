@@ -1,0 +1,15 @@
+.body {
+    display: table;
+}
+
+.mid-spacer {
+    display: table-cell;
+    width: 50px;
+}
+.left-panel {
+    display: table-cell;
+}
+.right-panel {
+    vertical-align: middle;
+    display: table-cell;
+}
