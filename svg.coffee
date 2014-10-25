@@ -3,13 +3,18 @@ Path = require 'paths-js/path'
 {Point} = require 'geometry.coffee'
 
 class SVG
+  MOUSE_EVTS = [
+    'mouseover', 'mouseout', 'mouseenter', 'mouseleave',
+    'click'
+  ]
+
   # TODO: is there something more recent?
   svg_ns = "http://www.w3.org/2000/svg"
 
   create_elt = (type, attrs, children = []) ->
     ret = document.createElementNS svg_ns, type
     for k, v of attrs
-      if k in ['mouseover', 'mouseout', 'mouseenter', 'mouseleave']
+      if k in MOUSE_EVTS
         do (v) ->
           ret.addEventListener k, (args...) ->
             return v.apply ret, args
