@@ -12,39 +12,37 @@ class Scene
     @xform = SVG.g {transform: xform_str}
     @svg.appendChild @xform
 
-    @_default_renderer =
-      render: (container) =>
-        container.appendChild @level.background()
-        container.appendChild @level.render_figure()
-        container.appendChild @level.render_nodes()
-    @_renderer = @_default_renderer
+    @_overlay = null
 
   svg_elt: -> @svg
-
-  set_renderer: (@_renderer) ->
 
   render: ->
     while @xform.firstChild
       @xform.removeChild @xform.firstChild
-    @_renderer.render @xform
+    # @_renderer.render @xform
+    @level.render @xform
 
-  animate: ({fps, duration, on_tick, on_end}) ->
+    if @_overlay?
+      @xform.appendChild @_overlay
+
+  animate_overlay: ({fps, duration, on_tick, on_end}) ->
     fps ?= 40
-
     tick = 1000 / fps
     start = (new Date).valueOf()
+    @_overlay = SVG.g {}
 
     interval_id = setInterval (=>
       now = (new Date).valueOf()
       elapsed = (now - start) / duration
+
+      @_overlay = on_tick elapsed
       @render()
-      elt = on_tick elapsed
-      @xform.appendChild elt
     ), tick
 
     setTimeout (=>
       clearInterval interval_id
-      @xform.appendChild on_end()
+      @_overlay = on_end()
+      @render()
     ), duration
 
 
@@ -52,9 +50,11 @@ class Scene
 window.onload = ->
   Level1 = LevelLoader.load 'l1'
   scene = new Scene Level1
-  locator = new Locator Level1
 
-  scene.set_renderer locator
+  # TODO: use Level1.allowed_tools
+  locator = new Locator Level1
+  locator.activate()
+
   scene.render()
   locator.on 'change', =>
     scene.render()
@@ -87,7 +87,7 @@ window.onload = ->
       f = (t) -> (t * t * t)
       return (f(x) - f(0)) / (f(1) - f(0))
 
-    scene.animate {
+    scene.animate_overlay {
       fps: 40, duration: 400,
       on_tick: (elapsed) =>
         d = SVG.util.make_closed_path sq.shape.points()
@@ -106,7 +106,12 @@ window.onload = ->
         ]
     }
 
-  tb = new ToolBox scene, {locator}, 'locator'
+  tb = new ToolBox {
+    scene: scene
+    tools: {locator}
+    default_tool: 'locator'
+    ap: 1
+  }
   ($ '.right-panel').append tb.elt()
   ($ '.right-panel').append sm.elt()
 

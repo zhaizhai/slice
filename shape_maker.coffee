@@ -42,8 +42,8 @@ class CoordsInput
   TMPL = '''
   <div>
     {{input_txt}}
-    <input type="text" class="x-input"></input>
-    <input type="text" class="y-input"></input>
+    <input type="text" class="x-input" placeholder="x-coordinate"></input>
+    <input type="text" class="y-input" placeholder="y-coordinate"></input>
   </div>
   '''
 
@@ -62,7 +62,7 @@ class LengthInput
   TMPL = '''
   <div>
     {{input_txt}}
-    <input type="text" class="len-input"></input>
+    <input type="text" class="len-input" placeholder="length"></input>
   </div>
   '''
 

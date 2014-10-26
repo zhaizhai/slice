@@ -1,11 +1,46 @@
 SVG = require 'svg.coffee'
 {EventEmitter} = require 'events'
 
+class HookBinding
+  constructor: (@level, @precedence, @hook_fn) ->
+    @_val = null
+    @_hook =
+      precedence: @precedence
+      render: =>
+        @hook_fn @_val
+
+  set: (v) ->
+    # TODO: if same value, deselect?
+    if @_val?
+      @level.remove_render_hook @_val, @_hook
+    @_val = v
+    if not v? then return
+
+    @level.set_render_hook @_val, @_hook
+
+  get: -> @_val
+
+
 class Locator extends EventEmitter
   constructor: (@level) ->
-    @_selected = null
-    @_hover = null
-    @_highlight = null
+    @_selected = new HookBinding @level, 3, (pt_id) =>
+      return @_make_node pt_id, 'purple'
+    @_hover = new HookBinding @level, 1, (pt_id) =>
+      return @_make_node pt_id, 'green'
+    @_highlight = new HookBinding @level, 5, (pt_id) =>
+      return @_make_node pt_id, 'yellow'
+
+  activate: ->
+    for i in [0...4]
+      pt_id = 'p' + i
+      do (pt_id) =>
+        @level.set_render_hook pt_id, {
+          precedence: 0
+          render: =>
+            return @_make_node pt_id, 'red'
+        }
+
+  cost: 1
 
   icon_elt: ->
     ret = ($ '<div></div>').css {
@@ -16,63 +51,40 @@ class Locator extends EventEmitter
     return ret
 
   select: (id) ->
-    if @_selected is id
-      @_selected = null
+    if @_selected.get() is id
+      @_selected.set null
     else
-      @_selected = id
+      @_selected.set id
     @emit 'change'
   hover: (id) ->
-    @_hover = id
+    @_hover.set id
     @emit 'change'
 
   highlight: (id) ->
-    @_highlight = id
+    @_highlight.set id
     @emit 'change'
 
-  render: (container) ->
-    container.appendChild @level.background()
-    container.appendChild @level.render_figure()
-    container.appendChild @_render_nodes()
+  _make_node: (pt_id, color) ->
+    pt = @level.get pt_id
+    return SVG.circle {
+      cx: pt.x, cy: pt.y, r: 6,
+      fill: color, stroke: 'black'
 
-  _render_nodes: ->
-    fig = @level.entities.figure
-    nodes = []
-    for pt, idx in fig.points()
-      pt_id = 'p' + idx
-      do (pt, idx, pt_id) =>
-        color = if @_highlight?
-          if pt_id is @_highlight
-            'yellow'
-          else
-            'red'
-        else if pt_id is @_selected
-          'purple'
-        else if pt_id is @_hover
-          'green'
-        else
-          'red'
+      mouseenter: (e) =>
+        @hover pt_id
+      mouseleave: (e) =>
+        @hover null
+      click: (e) =>
+        @select pt_id
+    }
 
-        nodes.push (SVG.circle {
-          cx: pt.x, cy: pt.y, r: 6,
-          fill: color, stroke: 'black'
-
-          mouseenter: (e) =>
-            @hover pt_id
-          mouseleave: (e) =>
-            @hover null
-          click: (e) =>
-            @select pt_id
-        })
-    return SVG.g {}, nodes
-
-  can_measure: -> @_selected?
+  can_measure: -> @_selected.get()?
 
   measure: ->
-    if not @_selected? then return
+    sel = @_selected.get()
+    if not sel? then return
 
-    pt = @level.entities[@_selected]
-    sel = @_selected
-
+    pt = @level.get sel
     @emit 'measurement', {
       ref: sel
       mesg: "Point at (#{pt.x}, #{pt.y})"
@@ -91,7 +103,12 @@ class ToolBox
     <div class="tool-notebook"></div>
   </div>
   '''
-  constructor: (@scene, @tools, default_tool = null) ->
+  constructor: ({
+    @scene, @tools, default_tool,
+    @ap
+  }) ->
+    default_tool ?= null
+
     @_elt = $ TMPL
     @_cur_tool = null
     @_icon_elts = {}
@@ -110,6 +127,11 @@ class ToolBox
     (@_elt.find 'button').click =>
       if not @_cur_tool? then return
       tool = @tools[@_cur_tool]
+      if @ap < tool.cost
+        console.log "not enough ap!"
+        return
+
+      @ap -= tool.cost
       tool.measure()
 
     @_measurements = []
@@ -123,14 +145,12 @@ class ToolBox
 
     if @_cur_tool is name
       @_cur_tool = null
-      # TODO: set @scene.set_renderer to default
       return
 
     @_cur_tool = name
     @_icon_elts[name].css 'border', 'solid 1px'
 
-    tool = @tools[name]
-    @scene.set_renderer tool
+    tool = @tools[name] # TODO
 
   # on_change: ->
   #   if not @_cur_tool? then return

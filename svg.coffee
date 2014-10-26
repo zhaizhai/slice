@@ -23,7 +23,6 @@ class SVG
         continue
       ret.setAttribute k, v
 
-    console.log 'children', children
     for child in children
       ret.appendChild child
     return ret
