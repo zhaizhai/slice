@@ -75,5 +75,24 @@ class BaseLevel
   render_background: ->
     return make_axes @dims.width, @dims.height
 
+class HookBinding
+  constructor: (@level, @precedence, @hook_fn) ->
+    @_val = null
+    @_hook =
+      precedence: @precedence
+      render: =>
+        @hook_fn @_val
+
+  set: (v) ->
+    # TODO: if same value, deselect?
+    if @_val?
+      @level.remove_render_hook @_val, @_hook
+    @_val = v
+    if not v? then return
+
+    @level.set_render_hook @_val, @_hook
+
+  get: -> @_val
 
 exports.BaseLevel = BaseLevel
+exports.HookBinding = HookBinding

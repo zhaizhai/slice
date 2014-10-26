@@ -2,7 +2,7 @@ SVG = require 'svg.coffee'
 LevelLoader = require 'levels/loader.coffee'
 {ShapeMaker} = require 'shape_maker.coffee'
 
-{Locator, ToolBox} = require 'measure/locator.coffee'
+{ToolBox, setup_tools} = require 'measure/toolbox.coffee'
 
 class Scene
   constructor: (@level) ->
@@ -51,14 +51,10 @@ window.onload = ->
   Level1 = LevelLoader.load 'l1'
   scene = new Scene Level1
 
-  # TODO: use Level1.allowed_tools
-  locator = new Locator Level1
-  locator.activate()
+  tb = (setup_tools Level1, scene).toolbox
+  ($ '.right-panel').append tb.elt()
 
   scene.render()
-  locator.on 'change', =>
-    scene.render()
-
   ($ '.left-panel')[0].appendChild scene.svg_elt()
 
   WRONG_RED = '#f2665c'
@@ -106,13 +102,6 @@ window.onload = ->
         ]
     }
 
-  tb = new ToolBox {
-    scene: scene
-    tools: {locator}
-    default_tool: 'locator'
-    ap: 1
-  }
-  ($ '.right-panel').append tb.elt()
   ($ '.right-panel').append sm.elt()
 
 

@@ -1,25 +1,6 @@
 SVG = require 'svg.coffee'
 {EventEmitter} = require 'events'
-
-class HookBinding
-  constructor: (@level, @precedence, @hook_fn) ->
-    @_val = null
-    @_hook =
-      precedence: @precedence
-      render: =>
-        @hook_fn @_val
-
-  set: (v) ->
-    # TODO: if same value, deselect?
-    if @_val?
-      @level.remove_render_hook @_val, @_hook
-    @_val = v
-    if not v? then return
-
-    @level.set_render_hook @_val, @_hook
-
-  get: -> @_val
-
+{HookBinding} = require 'levels/base.coffee'
 
 class Locator extends EventEmitter
   constructor: (@level) ->
@@ -95,75 +76,4 @@ class Locator extends EventEmitter
     }
 
 
-class ToolBox
-  TMPL = '''
-  <div>
-    <div class="tool-selection"></div>
-    <button>Measure!</button>
-    <div class="tool-notebook"></div>
-  </div>
-  '''
-  constructor: ({
-    @scene, @tools, default_tool,
-    @ap
-  }) ->
-    default_tool ?= null
-
-    @_elt = $ TMPL
-    @_cur_tool = null
-    @_icon_elts = {}
-
-    sel_elt = (@_elt.find '.tool-selection')
-    for name, tool of @tools
-      do (name, tool) =>
-        tool.on 'measurement', (@on_measure.bind @)
-
-        icon = tool.icon_elt()
-        icon.click =>
-          @select name
-        @_icon_elts[name] = icon
-        sel_elt.append icon
-
-    (@_elt.find 'button').click =>
-      if not @_cur_tool? then return
-      tool = @tools[@_cur_tool]
-      if @ap < tool.cost
-        console.log "not enough ap!"
-        return
-
-      @ap -= tool.cost
-      tool.measure()
-
-    @_measurements = []
-    @select default_tool
-
-  elt: -> @_elt
-
-  select: (name) ->
-    if @_cur_tool?
-      @_icon_elts[@_cur_tool].css 'border', 'none'
-
-    if @_cur_tool is name
-      @_cur_tool = null
-      return
-
-    @_cur_tool = name
-    @_icon_elts[name].css 'border', 'solid 1px'
-
-    tool = @tools[name] # TODO
-
-  # on_change: ->
-  #   if not @_cur_tool? then return
-  #   tool = @tools[@_cur_tool]
-  #   (@_elt.find 'button').prop 'disabled', tool.can_measure()
-
-  on_measure: (measurement) ->
-    @_measurements.push measurement
-    elt = $ "<div>#{measurement.mesg}</div>"
-    elt.hover (-> measurement.mouseover()),
-      (-> measurement.mouseout())
-    (@_elt.find 'div.tool-notebook').append elt
-
-
 exports.Locator = Locator
-exports.ToolBox = ToolBox
