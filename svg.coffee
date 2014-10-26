@@ -3,16 +3,16 @@ Path = require 'paths-js/path'
 {Point} = require 'geometry.coffee'
 
 class SVG
+  # TODO: is there something more recent?
+  SVG_NS = "http://www.w3.org/2000/svg"
   MOUSE_EVTS = [
     'mouseover', 'mouseout', 'mouseenter', 'mouseleave',
     'click'
   ]
-
-  # TODO: is there something more recent?
-  svg_ns = "http://www.w3.org/2000/svg"
+  PRIMITIVES = ['g', 'circle', 'path', 'animate']
 
   create_elt = (type, attrs, children = []) ->
-    ret = document.createElementNS svg_ns, type
+    ret = document.createElementNS SVG_NS, type
     for k, v of attrs
       if k in MOUSE_EVTS
         do (v) ->
@@ -22,12 +22,11 @@ class SVG
       ret.setAttribute k, v
 
     for child in children
-      console.log 'child', child
       ret.appendChild child
     return ret
 
   @root = (width, height) ->
-    ret = document.createElementNS svg_ns, 'svg'
+    ret = document.createElementNS SVG_NS, 'svg'
     ret.setAttribute 'width', width
     ret.setAttribute 'height', height
     return ret
@@ -35,7 +34,7 @@ class SVG
   make_primitive = (prim) =>
     @[prim] = (attrs, children) ->
       create_elt prim, attrs, children
-  for prim in ['g', 'circle', 'path']
+  for prim in PRIMITIVES
     make_primitive prim
 
 

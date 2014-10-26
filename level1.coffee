@@ -72,6 +72,8 @@ class Level1
     d = SVG.util.make_closed_path @entities.figure.points()
     return SVG.path {
       d: d, fill: 'blue', opacity: 0.2
+      click: ->
+        console.log 'fig click'
     }
 
   @render_nodes = ->
@@ -79,10 +81,6 @@ class Level1
     for pt in @entities.figure.points()
       nodes.push (SVG.circle {
         cx: pt.x, cy: pt.y, r: 5, fill: 'red', stroke: 'black'
-        # mouseenter: (e) ->
-        #   @setAttribute 'fill', 'green'
-        # mouseleave: (e) ->
-        #   @setAttribute 'fill', 'red'
       })
     return SVG.g {}, nodes
 
@@ -93,7 +91,6 @@ class Level1
       return {score: 0, err: "shape is not enclosed!"}
     for pt in fig.points()
       if poly.contains pt
-        console.log poly.points(), 'contains', pt
         return {score: 0, err: "shape is not enclosed!"}
     return {score: poly.area()}
 
