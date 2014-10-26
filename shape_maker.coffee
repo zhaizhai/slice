@@ -106,8 +106,10 @@ class ShapeMaker
     center = @_center.get()
     length = @_length.get()
     shape = @_make_square center, length
-    @_handler shape
-
+    @_handler {
+      center: center
+      shape: shape
+    }
 
 
 exports.ShapeMaker = ShapeMaker

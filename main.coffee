@@ -1,12 +1,11 @@
 SVG = require 'svg.coffee'
-{Level1} = require 'level1.coffee'
+LevelLoader = require 'levels/loader.coffee'
 {ShapeMaker} = require 'shape_maker.coffee'
 
 {Locator, ToolBox} = require 'measure/locator.coffee'
 
 class Scene
   constructor: (@level) ->
-    @level.generate {w: 100}
     @svg = SVG.root @level.dims.width, @level.dims.height
 
     xform_str = "translate(#{@level.dims.offset_x}, #{@level.dims.offset_y}) scale(1, -1)"
@@ -29,7 +28,9 @@ class Scene
       @xform.removeChild @xform.firstChild
     @_renderer.render @xform
 
-  animate: (fps, duration, on_tick) ->
+  animate: ({fps, duration, on_tick, on_end}) ->
+    fps ?= 40
+
     tick = 1000 / fps
     start = (new Date).valueOf()
 
@@ -43,11 +44,13 @@ class Scene
 
     setTimeout (=>
       clearInterval interval_id
+      @xform.appendChild on_end()
     ), duration
 
 
 
 window.onload = ->
+  Level1 = LevelLoader.load 'l1'
   scene = new Scene Level1
   locator = new Locator Level1
 
@@ -58,9 +61,21 @@ window.onload = ->
 
   ($ '.left-panel')[0].appendChild scene.svg_elt()
 
+  WRONG_RED = '#f2665c'
+  RIGHT_GREEN = '#12e632'
+
   sm = new ShapeMaker (sq) =>
-    {score, err} = Level1.evaluate sq
-    color = if err? then 'red' else 'green'
+    {score, err} = Level1.evaluate sq.shape
+    color = if err? then WRONG_RED else RIGHT_GREEN
+    disp_text = if err? then "Doesn't fit!" else "#{score}"
+    text_elt = SVG.text {
+      x: sq.center.x, y: sq.center.y,
+      'font-family': 'sans-serif',
+      'font-size': '16px', fill: 'black'
+      transform: "scale(1, -1)"
+      'text-anchor': 'middle'
+    }
+    text_elt.innerHTML = disp_text
 
     ease = (x) ->
       # f = (t) -> Math.exp (6 * t)
@@ -72,12 +87,24 @@ window.onload = ->
       f = (t) -> (t * t * t)
       return (f(x) - f(0)) / (f(1) - f(0))
 
-    scene.animate 40, 400, (elapsed) =>
-      d = SVG.util.make_closed_path sq.points()
-      path = SVG.path {
-        d: d, opacity: (0.1 + 0.8 * (ease elapsed)),
-        fill: color
-      }
+    scene.animate {
+      fps: 40, duration: 400,
+      on_tick: (elapsed) =>
+        d = SVG.util.make_closed_path sq.shape.points()
+        return SVG.path {
+          d: d, opacity: (0.1 + 0.8 * (ease elapsed)),
+          fill: color, stroke: 'black'
+        }
+      on_end: =>
+        d = SVG.util.make_closed_path sq.shape.points()
+        return SVG.g {}, [
+          SVG.path {
+            d: d, opacity: 0.9,
+            fill: color, stroke: 'black'
+          }
+          text_elt
+        ]
+    }
 
   tb = new ToolBox scene, {locator}, 'locator'
   ($ '.right-panel').append tb.elt()

@@ -18,20 +18,23 @@ class Segment
     # TODO: tolerance
     # TODO: handle degenerate cases
 
-    a1 = Point.cross_area seg1.start, seg1.end, seg2.start
-    a2 = Point.cross_area seg1.start, seg1.end, seg2.end
+    a1 = Point.cross_area (seg2.start.diff seg1.start),
+           (seg2.start.diff seg1.end)
+    a2 = Point.cross_area (seg2.end.diff seg1.start),
+           (seg2.end.diff seg1.end)
     if (a1 is 0) or (a2 is 0) or ((a1 < 0) is (a2 < 0))
       return false
 
-    b1 = Point.cross_area seg2.start, seg2.end, seg1.start
-    b2 = Point.cross_area seg2.start, seg2.end, seg1.end
+    b1 = Point.cross_area (seg1.start.diff seg2.start),
+           (seg1.start.diff seg2.end)
+    b2 = Point.cross_area (seg1.end.diff seg2.start),
+           (seg1.end.diff seg2.end)
     if (b1 is 0) or (b2 is 0) or ((b1 < 0) is (b2 < 0))
       return false
 
     return true
 
   constructor: (@start, @end) ->
-
 
 
 class Polygon
@@ -83,3 +86,10 @@ class Polygon
 exports.Point = Point
 exports.Segment = Segment
 exports.Polygon = Polygon
+
+
+# # test code
+# seg1 = new Segment (new Point 100, 0), (new Point 0, 100)
+# seg2 = new Segment (new Point 55, -45), (new Point 55, 55)
+
+# console.log (Segment.crosses seg1, seg2)

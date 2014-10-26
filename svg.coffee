@@ -9,7 +9,9 @@ class SVG
     'mouseover', 'mouseout', 'mouseenter', 'mouseleave',
     'click'
   ]
-  PRIMITIVES = ['g', 'circle', 'path', 'animate']
+  PRIMITIVES = [
+    'g', 'circle', 'path', 'animate', 'text'
+  ]
 
   create_elt = (type, attrs, children = []) ->
     ret = document.createElementNS SVG_NS, type
@@ -21,6 +23,7 @@ class SVG
         continue
       ret.setAttribute k, v
 
+    console.log 'children', children
     for child in children
       ret.appendChild child
     return ret
