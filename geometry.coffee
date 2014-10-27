@@ -29,26 +29,35 @@ class Point
 
 class Segment
   @crosses = (seg1, seg2, tolerance = 0.001) ->
-    # TODO: tolerance
     # TODO: handle degenerate cases
 
     a1 = Point.cross_area (seg2.start.diff seg1.start),
            (seg2.start.diff seg1.end)
     a2 = Point.cross_area (seg2.end.diff seg1.start),
            (seg2.end.diff seg1.end)
-    if (a1 is 0) or (a2 is 0) or ((a1 < 0) is (a2 < 0))
+
+    eps = tolerance * seg1.length()
+    if Math.abs(a1) < eps or Math.abs(a2) < eps
+      return false
+    if (a1 < 0) is (a2 < 0)
       return false
 
     b1 = Point.cross_area (seg1.start.diff seg2.start),
            (seg1.start.diff seg2.end)
     b2 = Point.cross_area (seg1.end.diff seg2.start),
            (seg1.end.diff seg2.end)
-    if (b1 is 0) or (b2 is 0) or ((b1 < 0) is (b2 < 0))
+
+    eps = tolerance * seg2.length()
+    if Math.abs(b1) < eps or Math.abs(b2) < eps
+      return false
+    if (b1 < 0) is (b2 < 0)
       return false
 
     return true
 
   constructor: (@start, @end) ->
+
+  length: -> (@end.diff @start).length()
 
 
 class Polygon
@@ -73,16 +82,25 @@ class Polygon
           return true
     return false
 
-  contains: (pt) ->
-    sign = null
+  contains: (pt, strictly = true) ->
+    [has_pos, has_neg, has_zero] = [false, false, false]
+    # TODO: tolerance
+
     for seg in @segments()
       s = seg.start.diff(pt)
       e = seg.end.diff(pt)
-      cur_sign = ((Point.cross_area s, e) < 0)
-      if not sign?
-        sign = cur_sign
-      else if cur_sign isnt sign
-        return false
+      a = Point.cross_area s, e
+      if a < 0
+        has_neg = true
+      else if a == 0
+        has_zero = true
+      else
+        has_pos = true
+
+    if has_neg and has_pos
+      return false
+    if has_zero and strictly
+      return false
     return true
 
   area: ->

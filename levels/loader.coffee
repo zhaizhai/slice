@@ -1,5 +1,6 @@
 {Level1} = require 'levels/level1.coffee'
 {Level2} = require 'levels/level2.coffee'
+{Level3} = require 'levels/level3.coffee'
 
 rand_int = (n) ->
   return Math.floor (Math.random() * n)
@@ -9,6 +10,7 @@ rand_choice = (list) ->
 LEVELS =
   l1: Level1
   l2: Level2
+  l3: Level3
 
 exports.load = (lname) ->
   level = LEVELS[lname]

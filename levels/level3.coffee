@@ -1,40 +1,32 @@
 SVG = require 'svg.coffee'
 Path = require 'paths-js/path'
 {Point, Polygon} = require 'geometry.coffee'
-
 {BaseLevel} = require 'levels/base.coffee'
 
-Level2Tools = {
-  locator: {
-    points: (('p' + idx) for idx in [0...4])
+exports.Level3 = new BaseLevel {
+  allowed_tools: {
+    locator: {
+      points: (('p' + idx) for idx in [0...3])
+    }
   }
-  ruler: {
-    points: (('p' + idx) for idx in [0...4])
-  }
-}
-
-exports.Level2 = new BaseLevel {
-  allowed_tools: Level2Tools
 
   dims: {
     width: 500
     height: 500
-    offset_x: 250
-    offset_y: 250
+    offset_x: 100
+    offset_y: 400
   }
 
   param_choices:
-    w: ((100 + 2 * i) for i in [0..30])
-    x: [5..50]
-    y: [5..50]
+    x: [150..350]
+    y: [150..350]
 
   generate: (@params) ->
-    {w, x, y} = @params
+    {x, y} = @params
     fig = new Polygon [
-      new Point (x + w), y
-      new Point x, (y + w)
-      new Point (x - w), y
-      new Point x, (y - w)
+      new Point 0, 0
+      new Point x, 0
+      new Point 0, y
     ]
 
     @add 'figure', fig
@@ -77,3 +69,4 @@ exports.Level2 = new BaseLevel {
     return {score: poly.area()}
 
 }
+

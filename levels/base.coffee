@@ -2,29 +2,32 @@ SVG = require 'svg.coffee'
 Path = require 'paths-js/path'
 {Point, Polygon} = require 'geometry.coffee'
 
-exports.make_axes = make_axes = (w, h) ->
-  w -= 4
-  h -= 4
+exports.make_axes = make_axes = (dims) ->
+  [left, right] = [-dims.offset_x, dims.width - dims.offset_x]
+  [bottom, top] = [-dims.height + dims.offset_y, dims.offset_y]
 
-  x_axis = Path().moveto (-w / 2), 0
-  x_axis = x_axis.lineto (w / 2), 0
+  [left, right] = [left + 2, right - 2]
+  [bottom, top] = [bottom + 2, top - 2]
+
+  x_axis = Path().moveto left, 0
+  x_axis = x_axis.lineto right, 0
   x_axis = SVG.util.arrow x_axis, {
-    tip: (new Point (w / 2), 0),
+    tip: (new Point right, 0),
     length: 8, angle: 20, direction: 0
   }
   x_axis = SVG.util.arrow x_axis, {
-    tip: (new Point (-w / 2), 0),
+    tip: (new Point left, 0),
     length: 8, angle: 20, direction: 180
   }
 
-  y_axis = Path().moveto 0, (-h / 2)
-  y_axis = y_axis.lineto 0, (h / 2)
+  y_axis = Path().moveto 0, bottom
+  y_axis = y_axis.lineto 0, top
   y_axis = SVG.util.arrow y_axis, {
-    tip: (new Point 0, (h / 2)),
+    tip: (new Point 0, top),
     length: 8, angle: 20, direction: 90
   }
   y_axis = SVG.util.arrow y_axis, {
-    tip: (new Point 0, (-h / 2)),
+    tip: (new Point 0, bottom),
     length: 8, angle: 20, direction: 270
   }
 
@@ -86,7 +89,7 @@ class BaseLevel
     return @entities[k]
 
   render_background: ->
-    return make_axes @dims.width, @dims.height
+    return make_axes @dims
 
 class HookBinding
   constructor: (@level, @precedence, @hook_fn) ->
