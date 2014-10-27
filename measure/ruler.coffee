@@ -11,6 +11,31 @@ class Ruler extends EventEmitter
     @_end = new HookBinding @level, 3, (pt_id) =>
       return @_make_node pt_id, 'purple'
 
+  _rule_overlay: (start, end) ->
+    u = end.diff start
+    if u.x is 0 and u.y is 0
+      throw new Error "start and end can't coincide!"
+    v = new Point u.y, -u.x
+    v = v.scale (1 / v.length())
+
+    gap = 7
+    width = 6
+    [l1, l2, l3] = [gap, (gap + width), (gap + 2 * width)]
+
+    d = Path()
+    d = d.moveto(start.plus (v.scale l1))
+         .lineto(start.plus (v.scale l3))
+    d = d.moveto(end.plus (v.scale l1))
+         .lineto(end.plus (v.scale l3))
+    d = d.moveto(start.plus (v.scale l2))
+         .lineto(end.plus (v.scale l2))
+
+    return SVG.path {
+      d: d.print()
+      stroke: 'black'
+      'stroke-width': 2
+    }
+
   activate: ->
     for i in [0...4]
       pt_id = 'p' + i
@@ -26,10 +51,7 @@ class Ruler extends EventEmitter
         return
 
       start_pt = @level.get @_start.get()
-      overlay = SVG.path {
-        d: Path().moveto(start_pt).lineto(e).print()
-        stroke: 'green'
-      }
+      overlay = @_rule_overlay start_pt, (new Point e.x, e.y)
       @scene.set_overlay overlay
 
   deactivate: ->
@@ -62,11 +84,7 @@ class Ruler extends EventEmitter
       @_end.set id
       start_pt = @level.get @_start.get()
       end_pt = @level.get @_end.get()
-      overlay = SVG.path {
-        d: Path().moveto(start_pt).lineto(end_pt).print()
-        stroke: 'green'
-      }
-      @scene.set_overlay overlay
+      @scene.set_overlay (@_rule_overlay start_pt, end_pt)
 
   _make_node: (pt_id, color) ->
     pt = @level.get pt_id
@@ -74,9 +92,9 @@ class Ruler extends EventEmitter
       cx: pt.x, cy: pt.y, r: 6,
       fill: color, stroke: 'black'
 
-      mouseenter: (e) =>
-        console.log 'mouse enter', pt_id
-        # @hover pt_id
+      # mouseenter: (e) =>
+      #   console.log 'mouse enter', pt_id
+      #   # @hover pt_id
       # mouseleave: (e) =>
       #   @hover null
       click: (e) =>

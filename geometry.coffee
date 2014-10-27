@@ -11,11 +11,20 @@ class Point
 
   constructor: (@x, @y) ->
 
+  plus: (pt) ->
+    return new Point (@x + pt.x), (@y + pt.y)
+
   shift: (x, y) ->
     return new Point (@x + x), (@y + y)
 
   diff: (pt) ->
     return new Point (@x - pt.x), (@y - pt.y)
+
+  length: ->
+    return Math.sqrt(@x * @x + @y * @y)
+
+  scale: (r) ->
+    return new Point (@x * r), (@y * r)
 
 
 class Segment
