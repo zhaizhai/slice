@@ -59,8 +59,11 @@ class BaseLevel
     @_render_hooks[k] ?= []
     @_render_hooks[k].push hook
   remove_render_hook: (k, hook) ->
+    old_hooks = @_render_hooks[k]
+    if not old_hooks? then return
+
     new_hooks = []
-    for h in @_render_hooks[k]
+    for h in old_hooks
       if h isnt hook
         new_hooks.push h
     @_render_hooks[k] = new_hooks

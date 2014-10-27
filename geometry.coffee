@@ -1,6 +1,11 @@
 assert = require 'assert'
 
 class Point
+  @dist = (p1, p2) ->
+    dx = p1.x - p2.x
+    dy = p1.y - p2.y
+    return Math.sqrt(dx * dx + dy * dy)
+
   @cross_area = (p1, p2) ->
     return p1.x * p2.y - p1.y * p2.x
 

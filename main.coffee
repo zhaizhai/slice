@@ -5,6 +5,13 @@ LevelLoader = require 'levels/loader.coffee'
 {ToolBox, setup_tools} = require 'measure/toolbox.coffee'
 
 class Scene
+  standardize_evt = (e) ->
+    return {
+      x: e.offsetX ? (e.clientX - $(e.target).offset().left)
+      y: e.offsetY ? (e.clientY - $(e.target).offset().top)
+      right: (e.which is 3)
+    }
+
   constructor: (@level) ->
     @svg = SVG.root @level.dims.width, @level.dims.height
 
@@ -13,6 +20,16 @@ class Scene
     @svg.appendChild @xform
 
     @_overlay = null
+    @_mousemove_handler = null
+    ($ @svg).mousemove (e) =>
+      if @_mousemove_handler?
+        e = (standardize_evt e)
+        e.x -= @level.dims.offset_x
+        e.y -= @level.dims.offset_y
+        e.y = -e.y
+        @_mousemove_handler e
+
+  mousemove: (@_mousemove_handler) ->
 
   svg_elt: -> @svg
 
@@ -24,6 +41,9 @@ class Scene
 
     if @_overlay?
       @xform.appendChild @_overlay
+
+  set_overlay: (@_overlay) ->
+    @render()
 
   animate_overlay: ({fps, duration, on_tick, on_end}) ->
     fps ?= 40
@@ -49,6 +69,7 @@ class Scene
 
 window.onload = ->
   Level1 = LevelLoader.load 'l1'
+  window.level = Level1
   scene = new Scene Level1
 
   tb = (setup_tools Level1, scene).toolbox

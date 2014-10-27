@@ -3,7 +3,7 @@ SVG = require 'svg.coffee'
 {HookBinding} = require 'levels/base.coffee'
 
 class Locator extends EventEmitter
-  constructor: (@level) ->
+  constructor: (@level, @scene) ->
     @_selected = new HookBinding @level, 3, (pt_id) =>
       return @_make_node pt_id, 'purple'
     @_hover = new HookBinding @level, 1, (pt_id) =>
@@ -20,6 +20,11 @@ class Locator extends EventEmitter
           render: =>
             return @_make_node pt_id, 'red'
         }
+
+  deactivate: ->
+    @_selected.set null
+    @_hover.set null
+    @_highlight.set null
 
   cost: 1
 
