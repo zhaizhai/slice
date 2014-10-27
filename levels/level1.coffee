@@ -23,6 +23,9 @@ exports.Level1 = new BaseLevel {
     offset_y: 250
   }
 
+  param_choices:
+    w: ((100 + 2 * i) for i in [0..50])
+
   generate: ({
     w
   }) ->
@@ -43,19 +46,10 @@ exports.Level1 = new BaseLevel {
       d: d, fill: 'blue', opacity: 0.2
     }
 
-  _get_hook: (k) ->
-    best_hook = null
-    hooks = @_render_hooks[k] ? []
-    for hook in hooks
-      if best_hook? and hook.precedence <= best_hook.precedence
-        continue
-      best_hook = hook
-    return hook
-
   render_nodes: ->
     nodes = []
     for pt, idx in @entities.figure.points()
-      hook = @_get_hook ('p' + idx)
+      hook = @get_hook ('p' + idx)
       if hook?
         nodes.push hook.render()
       else

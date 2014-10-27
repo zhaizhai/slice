@@ -54,6 +54,7 @@ class BaseLevel
     for k, v of opts
       @[k] = v
 
+
   set_render_hook: (k, hook) ->
     # hook = {render(), precedence}
     @_render_hooks[k] ?= []
@@ -69,6 +70,15 @@ class BaseLevel
     @_render_hooks[k] = new_hooks
   clear_render_hooks: ->
     @_render_hooks = {}
+  get_hook: (k) ->
+    best_hook = null
+    hooks = @_render_hooks[k] ? []
+    for hook in hooks
+      if best_hook? and hook.precedence <= best_hook.precedence
+        continue
+      best_hook = hook
+    return hook
+
 
   add: (k, v) ->
     @entities[k] = v

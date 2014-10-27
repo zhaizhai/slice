@@ -6,7 +6,7 @@ compiled_js_dir=${script_dir}/compiled_js
 # jquery_filename="jquery-1.9.1.min.js"
 
 function compile {
-    coffee scripts/build.coffee
+    coffee scripts/build.coffee $1
 }
 
 start_time=$(date "+%s.%N")
@@ -25,7 +25,10 @@ set -e
 # checkpoint "Compiled resources (%.3fs)"
 # res_size=`stat -c "%s" ${compiled_js_dir}/resources.js`
 # printf "Resources size: $res_size bytes\n"
-compile > ${compiled_js_dir}/main.js
+
+compile main.coffee > ${compiled_js_dir}/main.js
+compile home.coffee > ${compiled_js_dir}/home.js
+
 # checkpoint "Compiled coffeescript (%.3fs)"
 
 set +e

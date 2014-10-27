@@ -20,8 +20,10 @@ transform_fn = (file) ->
     @queue null
   return (through write, end)
 
+[_, _, source_filename] = process.argv
+
 b.transform transform_fn
-b.add 'main.coffee'
+b.add source_filename
 b.bundle (err, js_buf) ->
   throw err if err
   js_string = js_buf.toString()

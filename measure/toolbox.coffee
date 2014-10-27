@@ -12,9 +12,10 @@ class ToolBox
   '''
   constructor: ({
     @level, @scene, @tools,
-    @ap, default_tool
+    default_tool
   }) ->
     default_tool ?= null
+    @ap_used = 0
 
     @_elt = $ TMPL
     @_cur_tool = null
@@ -32,14 +33,11 @@ class ToolBox
     (@_elt.find 'button').click =>
       if not @_cur_tool? then return
       tool = @tools[@_cur_tool]
-      if @ap < tool.cost
-        console.log "not enough ap!"
-        return
 
       result = tool.measure()
       if not result? then return
+      @ap_used += tool.cost
 
-      @ap -= tool.cost
       @_on_measure result
       @_update()
 
@@ -51,7 +49,7 @@ class ToolBox
 
   _update: ->
     # TODO: do more updating here
-    (@_elt.find '.tool-action-points').text "#{@ap} action points left"
+    (@_elt.find '.tool-action-points').text "#{@ap_used} action points used"
 
   _deactivate: (name) ->
     @_icon_elts[name].css 'border', 'none'
@@ -120,7 +118,6 @@ exports.setup_tools = (level, scene) ->
       tools: tools
       scene: scene
       default_tool: 'locator'
-      ap: 1
     }
   }
 

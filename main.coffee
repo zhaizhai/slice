@@ -68,11 +68,16 @@ class Scene
 
 
 window.onload = ->
-  Level1 = LevelLoader.load 'l1'
-  window.level = Level1
-  scene = new Scene Level1
+  level_id = window.location.hash.slice(1)
+  level = LevelLoader.load level_id
+  if not level?
+    console.log "Hash \"#{level_id}\" does not specify a level, defaulting to l1"
+    level = LevelLoader.load 'l1'
 
-  tb = (setup_tools Level1, scene).toolbox
+  window.level = level
+  scene = new Scene level
+
+  tb = (setup_tools level, scene).toolbox
   ($ '.right-panel').append tb.elt()
 
   scene.render()
@@ -82,11 +87,11 @@ window.onload = ->
   RIGHT_GREEN = '#12e632'
 
   sm = new ShapeMaker (sq) =>
-    {score, err} = Level1.evaluate sq.shape
+    {score, err} = level.evaluate sq.shape
     color = if err? then WRONG_RED else RIGHT_GREEN
     disp_text = if err? then "Doesn't fit!" else "#{score}"
     text_elt = SVG.text {
-      x: sq.center.x, y: sq.center.y,
+      x: sq.center.x, y: -sq.center.y,
       'font-family': 'sans-serif',
       'font-size': '16px', fill: 'black'
       transform: "scale(1, -1)"
