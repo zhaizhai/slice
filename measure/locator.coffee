@@ -3,7 +3,7 @@ SVG = require 'svg.coffee'
 {HookBinding} = require 'levels/base.coffee'
 
 class Locator extends EventEmitter
-  constructor: (@level, @scene) ->
+  constructor: (@level, @level_data, @scene) ->
     @_selected = new HookBinding @level, 3, (pt_id) =>
       return @_make_node pt_id, 'purple'
     @_hover = new HookBinding @level, 1, (pt_id) =>
@@ -12,8 +12,7 @@ class Locator extends EventEmitter
       return @_make_node pt_id, 'yellow'
 
   activate: ->
-    for i in [0...4]
-      pt_id = 'p' + i
+    for pt_id in @level_data.points
       do (pt_id) =>
         @level.set_render_hook pt_id, {
           precedence: 0
@@ -29,10 +28,11 @@ class Locator extends EventEmitter
   cost: 1
 
   icon_elt: ->
-    ret = ($ '<div></div>').css {
-      'background-color': 'yellow'
+    ret = ($ '<div>L</div>').css {
+      'background-color': '#ffffaa'
       width: 30
       height: 30
+      'text-align': 'center'
     }
     return ret
 
@@ -64,14 +64,12 @@ class Locator extends EventEmitter
         @select pt_id
     }
 
-  can_measure: -> @_selected.get()?
-
   measure: ->
     sel = @_selected.get()
-    if not sel? then return
+    if not sel? then return null
 
     pt = @level.get sel
-    @emit 'measurement', {
+    return {
       ref: sel
       mesg: "Point at (#{pt.x}, #{pt.y})"
       mouseover: =>

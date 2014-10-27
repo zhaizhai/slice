@@ -5,6 +5,7 @@ class ToolBox
   TMPL = '''
   <div>
     <div class="tool-selection"></div>
+    <div class="tool-action-points"></div>
     <button>Measure!</button>
     <div class="tool-notebook"></div>
   </div>
@@ -22,8 +23,6 @@ class ToolBox
     sel_elt = (@_elt.find '.tool-selection')
     for name, tool of @tools
       do (name, tool) =>
-        tool.on 'measurement', (@on_measure.bind @)
-
         icon = tool.icon_elt()
         icon.click =>
           @select name
@@ -37,19 +36,29 @@ class ToolBox
         console.log "not enough ap!"
         return
 
+      result = tool.measure()
+      if not result? then return
+
       @ap -= tool.cost
-      tool.measure()
+      @_on_measure result
+      @_update()
 
     @_measurements = []
     @select default_tool
+    @_update()
 
   elt: -> @_elt
+
+  _update: ->
+    # TODO: do more updating here
+    (@_elt.find '.tool-action-points').text "#{@ap} action points left"
 
   _deactivate: (name) ->
     @_icon_elts[name].css 'border', 'none'
     tool = @tools[name]
     @level.clear_render_hooks()
     @scene.mousemove null
+    @scene.set_overlay null
     console.log 'deactivating', name
     tool.deactivate()
 
@@ -76,11 +85,11 @@ class ToolBox
   #   tool = @tools[@_cur_tool]
   #   (@_elt.find 'button').prop 'disabled', tool.can_measure()
 
-  on_measure: (measurement) ->
-    @_measurements.push measurement
-    elt = $ "<div>#{measurement.mesg}</div>"
-    elt.hover (-> measurement.mouseover()),
-      (-> measurement.mouseout())
+  _on_measure: (result) ->
+    @_measurements.push result
+    elt = $ "<div>#{result.mesg}</div>"
+    elt.hover (-> result.mouseover()),
+      (-> result.mouseout())
     (@_elt.find 'div.tool-notebook').append elt
 
 
@@ -94,7 +103,10 @@ exports.setup_tools = (level, scene) ->
 
   tools = {}
   for name, tool_type of TOOLS
-    tool = new tool_type level, scene
+    tool_data = level.allowed_tools[name]
+    if not tool_data? then continue
+
+    tool = new tool_type level, tool_data, scene
     tools[name] = tool
 
     # TODO: hopefully change events never fire when tool isn't active,

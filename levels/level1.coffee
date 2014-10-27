@@ -6,6 +6,10 @@ Path = require 'paths-js/path'
 
 Level1Tools = {
   locator: {
+    points: (('p' + idx) for idx in [0...4])
+  }
+  ruler: {
+    points: (('p' + idx) for idx in [0...4])
   }
 }
 

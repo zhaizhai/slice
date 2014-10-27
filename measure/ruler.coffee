@@ -5,7 +5,7 @@ Path = require 'paths-js/path'
 {Point} = require 'geometry.coffee'
 
 class Ruler extends EventEmitter
-  constructor: (@level, @scene) ->
+  constructor: (@level, @level_data, @scene) ->
     @_start = new HookBinding @level, 3, (pt_id) =>
       return @_make_node pt_id, 'purple'
     @_end = new HookBinding @level, 3, (pt_id) =>
@@ -37,8 +37,7 @@ class Ruler extends EventEmitter
     }
 
   activate: ->
-    for i in [0...4]
-      pt_id = 'p' + i
+    for pt_id in @level_data.points
       do (pt_id) =>
         @level.set_render_hook pt_id, {
           precedence: 0
@@ -61,10 +60,11 @@ class Ruler extends EventEmitter
   cost: 1
 
   icon_elt: ->
-    ret = ($ '<div></div>').css {
-      'background-color': 'blue'
+    ret = ($ '<div>R</div>').css {
+      'background-color': '#aaaaff'
       width: 30
       height: 30
+      'text-align': 'center'
     }
     return ret
 
@@ -79,6 +79,7 @@ class Ruler extends EventEmitter
     if @_start.get() is id
       # deselecting
       @_start.set null
+      @scene.set_overlay null
 
     else
       @_end.set id
@@ -117,19 +118,17 @@ class Ruler extends EventEmitter
   measure: ->
     start = @_start.get()
     end = @_end.get()
-    if not start? or not send? then return
+    if not start? or not end? then return null
 
     start = @level.get start
     end = @level.get end
     len = Point.dist start, end
 
-    @emit 'measurement', {
+    return {
       ref: start # TODO
       mesg: "Length is #{len}"
-      # mouseover: =>
-      #   @highlight sel
-      # mouseout: =>
-      #   @highlight null
+      mouseover: =>
+      mouseout: =>
     }
 
 
