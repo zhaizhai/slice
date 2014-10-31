@@ -1,8 +1,10 @@
 SVG = require 'svg.coffee'
 LevelLoader = require 'levels/loader.coffee'
-{ShapeMaker} = require 'shape_maker.coffee'
 
-{ToolBox, setup_tools} = require 'measure/toolbox.coffee'
+{ShapeMaker} = require 'shape_maker.coffee'
+{SquareShape} = require 'shape_spec.coffee'
+
+{ToolBox, setup_tools} = require 'toolbox/toolbox.coffee'
 
 class Scene
   standardize_evt = (e) ->
@@ -86,8 +88,10 @@ window.onload = ->
   WRONG_RED = '#f2665c'
   RIGHT_GREEN = '#12e632'
 
-  sm = new ShapeMaker (sq) =>
-    {score, err} = level.evaluate sq.shape
+  sm = new ShapeMaker SquareShape, (sq) =>
+    poly = sq.polygon()
+
+    {score, err} = level.evaluate poly
     color = if err? then WRONG_RED else RIGHT_GREEN
     disp_text = if err? then "Doesn't fit!" else "#{score}"
     text_elt = SVG.text {
@@ -112,13 +116,13 @@ window.onload = ->
     scene.animate_overlay {
       fps: 40, duration: 400,
       on_tick: (elapsed) =>
-        d = SVG.util.make_closed_path sq.shape.points()
+        d = SVG.util.make_closed_path poly.points()
         return SVG.path {
           d: d, opacity: (0.1 + 0.8 * (ease elapsed)),
           fill: color, stroke: 'black'
         }
       on_end: =>
-        d = SVG.util.make_closed_path sq.shape.points()
+        d = SVG.util.make_closed_path poly.points()
         return SVG.g {}, [
           SVG.path {
             d: d, opacity: 0.9,

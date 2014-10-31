@@ -24,7 +24,7 @@ class ToolBox
     sel_elt = (@_elt.find '.tool-selection')
     for name, tool of @tools
       do (name, tool) =>
-        icon = tool.icon_elt()
+        icon = tool.icon_elt().addClass 'tool-icon'
         icon.click =>
           @select name
         @_icon_elts[name] = icon
@@ -91,8 +91,8 @@ class ToolBox
     (@_elt.find 'div.tool-notebook').append elt
 
 
-{Locator} = require 'measure/locator.coffee'
-{Ruler} = require 'measure/ruler.coffee'
+{Locator} = require 'toolbox/locator.coffee'
+{Ruler} = require 'toolbox/ruler.coffee'
 
 exports.setup_tools = (level, scene) ->
   TOOLS =

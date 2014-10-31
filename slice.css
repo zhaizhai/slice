@@ -17,3 +17,13 @@
 path {
     shape-rendering: crispEdges;
 }
+
+
+/* toolbox */
+.tool-selection {
+    display: table;
+}
+.tool-icon {
+    display: table-cell;
+    margin: 2px;
+}
