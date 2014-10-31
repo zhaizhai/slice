@@ -1,0 +1,11 @@
+button {
+    font-family: 'Signika', sans-serif;
+    border-radius: 2px;
+    border: solid 1px;
+    border-color: #888888;
+    background-color: #78cc5c;
+}
+button:hover {
+    border-color: #444444;
+    background-color: #69b350;
+}

@@ -1,4 +1,5 @@
-.body {
+body {
+    font-family: 'Signika', sans-serif;
     display: table;
 }
 
@@ -7,23 +8,20 @@
     width: 50px;
 }
 .left-panel {
+    vertical-align: middle;
     display: table-cell;
 }
 .right-panel {
-    vertical-align: middle;
     display: table-cell;
+    height: 600px;
+}
+
+.app-title {
+    font-family: 'Pacifico', cursive;
+    font-size: 40px;
 }
 
 path {
     shape-rendering: crispEdges;
 }
 
-
-/* toolbox */
-.tool-selection {
-    display: table;
-}
-.tool-icon {
-    display: table-cell;
-    margin: 2px;
-}

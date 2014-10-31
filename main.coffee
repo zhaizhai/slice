@@ -1,6 +1,6 @@
 SVG = require 'svg.coffee'
 LevelLoader = require 'levels/loader.coffee'
-{ShapeMaker} = require 'shape_maker.coffee'
+{ShapeMaker} = require 'input/shape_maker.coffee'
 
 {ToolBox, setup_tools} = require 'toolbox/toolbox.coffee'
 
@@ -132,6 +132,7 @@ window.onload = ->
         ]
     }
 
+  ($ '.right-panel').prepend ($ '<div class="app-title">Slice</div>')
   ($ '.right-panel').append sm.elt()
 
 

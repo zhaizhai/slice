@@ -1,3 +1,5 @@
+{evaluate, get_syntax_tree} = require 'input/eval.coffee'
+
 class LevelInfo
   constructor: ({
     @level_id, @name, @stars, @completed
@@ -42,3 +44,20 @@ window.onload = ->
       completed: info.completed
     }
     ($ document.body).append (new LevelDisplay level_info).elt()
+
+  # testing
+  x = $ '''
+    <div>
+      <input type="text"></input>
+      <button>Evaluate!</button>
+      <div class="result"></div>
+    </div>
+  '''
+
+  (x.find 'button').click =>
+    input = (x.find 'input').val()
+    input = input.replace /\ /g, ''
+    ast = get_syntax_tree input
+    result = evaluate ast, {}, {}
+    (x.find 'div.result').text result
+  ($ document.body).append x

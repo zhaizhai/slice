@@ -28,21 +28,27 @@ Path = require 'paths-js/path'
 
 
 class ShapeMaker
-  TMPL = '''<div></div>'''
+  TMPL = '''<div class="toolbox-section">
+    <div class="input-title"></div>
+    <div class="container"></div>
+  </div>'''
 
   constructor: (@_shape, @_handler) ->
     # @_disp = new ShapeDisplay()
 
     @_elt = $ TMPL
+    (@_elt.find '.input-title').text @_shape.title
+    container = @_elt.find '.container'
+
     @_inputs = {}
     # TODO: params are in unspecified order
     for k, v of @_shape.params
       @_inputs[k] = v()
-      @_elt.append @_inputs[k].elt()
+      container.append @_inputs[k].elt()
 
     submit = ($ '<button>Submit</button>').click =>
       @_on_submit()
-    @_elt.append submit
+    container.append submit
 
   elt: -> @_elt
 

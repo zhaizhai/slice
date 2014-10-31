@@ -2,7 +2,7 @@ SVG = require 'svg.coffee'
 Path = require 'paths-js/path'
 {Point, Polygon} = require 'geometry.coffee'
 {BaseLevel} = require 'levels/base.coffee'
-{SquareShape} = require 'shape_spec.coffee'
+{SquareShape} = require 'input/shape_spec.coffee'
 
 Level1Tools = {
   locator: {

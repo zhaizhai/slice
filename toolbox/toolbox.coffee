@@ -4,10 +4,15 @@ SVG = require 'svg.coffee'
 class ToolBox
   TMPL = '''
   <div>
-    <div class="tool-selection"></div>
-    <div class="tool-action-points"></div>
-    <button>Measure!</button>
-    <div class="tool-notebook"></div>
+    <div class="toolbox-section tool-selection-area">
+      <div class="tool-title">Tools</div>
+      <div class="tool-selection"></div>
+    </div>
+    <div class="toolbox-section tool-measurement-area">
+      <div class="tool-action-points"></div>
+      <button>Measure!</button>
+      <div class="tool-notebook"></div>
+    </div>
   </div>
   '''
   constructor: ({
@@ -24,11 +29,13 @@ class ToolBox
     sel_elt = (@_elt.find '.tool-selection')
     for name, tool of @tools
       do (name, tool) =>
-        icon = tool.icon_elt().addClass 'tool-icon'
-        icon.click =>
+        icon = tool.icons.unselected
+        container = ($ '<div></div>')
+          .addClass('tool-icon').append icon
+        container.click =>
           @select name
-        @_icon_elts[name] = icon
-        sel_elt.append icon
+        @_icon_elts[name] = container
+        sel_elt.append container
 
     (@_elt.find 'button').click =>
       if not @_cur_tool? then return
@@ -52,8 +59,10 @@ class ToolBox
     (@_elt.find '.tool-action-points').text "#{@ap_used} action points used"
 
   _deactivate: (name) ->
-    @_icon_elts[name].css 'border', 'none'
     tool = @tools[name]
+    @_icon_elts[name].empty()
+    @_icon_elts[name].append tool.icons.unselected
+
     @level.clear_render_hooks()
     @scene.mousemove null
     @scene.set_overlay null
@@ -61,8 +70,10 @@ class ToolBox
     tool.deactivate()
 
   _activate: (name) ->
-    @_icon_elts[name].css 'border', 'solid 1px'
     tool = @tools[name]
+    @_icon_elts[name].empty()
+    @_icon_elts[name].append tool.icons.selected
+
     console.log 'activating', name
     tool.activate()
     @scene.render()

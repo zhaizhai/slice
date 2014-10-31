@@ -4,6 +4,8 @@ Path = require 'paths-js/path'
 {HookBinding} = require 'levels/base.coffee'
 {Point} = require 'geometry.coffee'
 
+{SELECTED_ICON, UNSELECTED_ICON} = require 'toolbox/ruler_icon.coffee'
+
 class Ruler extends EventEmitter
   constructor: (@level, @level_data, @scene) ->
     @_start = new HookBinding @level, 3, (pt_id) =>
@@ -36,6 +38,10 @@ class Ruler extends EventEmitter
       'stroke-width': 2
     }
 
+  icons:
+    selected: SELECTED_ICON
+    unselected: UNSELECTED_ICON
+
   activate: ->
     for pt_id in @level_data.points
       do (pt_id) =>
@@ -58,15 +64,6 @@ class Ruler extends EventEmitter
     @_end.set null
 
   cost: 1
-
-  icon_elt: ->
-    ret = ($ '<div>R</div>').css {
-      'background-color': '#aaaaff'
-      width: 30
-      height: 30
-      'text-align': 'center'
-    }
-    return ret
 
   set_start: (id) ->
     @_start.set id

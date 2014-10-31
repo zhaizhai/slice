@@ -110,16 +110,18 @@ evaluate = (syntax_tree, functions, variables) ->
       return evaluate(sub_tree, functions, more_variables)
   assert false
 
+exports.get_syntax_tree = get_syntax_tree
+exports.evaluate = evaluate
 
 
-# example usage.
-funz = {f: {inputs: ["z"], output_expression_str: "z+1"} }
-varz = {x: 0.5, y: 5}
-tree = get_syntax_tree("x^2+f(1+3/y)*(y)")
-console.log util.inspect(tree, {depth:null})
-console.log "eval", evaluate(tree, funz, varz)
+# # example usage.
+# funz = {f: {inputs: ["z"], output_expression_str: "z+1"} }
+# varz = {x: 0.5, y: 5}
+# tree = get_syntax_tree("x^2+f(1+3/y)*(y)")
+# console.log util.inspect(tree, {depth:null})
+# console.log "eval", evaluate(tree, funz, varz)
 
 
-t = get_syntax_tree("30.5+5*x-2+x^6")
-console.log util.inspect(t, {depth:null})
-console.log "eval", evaluate(t, funz, varz)
+# t = get_syntax_tree("30.5+5*x-2+x^6")
+# console.log util.inspect(t, {depth:null})
+# console.log "eval", evaluate(t, funz, varz)

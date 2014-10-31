@@ -13,7 +13,7 @@ render_to_jq = (tmpl, params) ->
 
 class CoordsInput
   TMPL = '''
-  <div>
+  <div class="input-param">
     {{input_txt}}
     <input type="text" class="x-input" placeholder="x-coordinate"></input>
     <input type="text" class="y-input" placeholder="y-coordinate"></input>
@@ -33,7 +33,7 @@ class CoordsInput
 
 class LengthInput
   TMPL = '''
-  <div>
+  <div class="input-param">
     {{input_txt}}
     <input type="text" class="len-input" placeholder="length"></input>
   </div>
@@ -56,6 +56,7 @@ Length = (label) ->
 
 
 exports.SquareShape =
+  title: 'Slice the biggest square!'
   params:
     center: Coords 'Center'
     side: Length 'Side length'
@@ -79,6 +80,7 @@ exports.SquareShape =
 
 
 exports.CircleShape =
+  title: 'Slice the biggest circle!'
   params:
     center: Coords 'Center'
     radius: Length 'Radius'
