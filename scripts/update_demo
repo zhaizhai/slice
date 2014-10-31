@@ -1,0 +1,9 @@
+#!/bin/bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT=$SCRIPT_DIR/..
+
+cp ${PROJECT_ROOT}/*.html ${PROJECT_ROOT}/demo
+cp -r ${PROJECT_ROOT}/compiled_js ${PROJECT_ROOT}/demo
+cp -r ${PROJECT_ROOT}/css ${PROJECT_ROOT}/demo
+cp -r ${PROJECT_ROOT}/lib ${PROJECT_ROOT}/demo

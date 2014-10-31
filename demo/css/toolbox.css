@@ -1,0 +1,49 @@
+.toolbox-section {
+    margin-bottom: 4px;
+    border-radius: 2px;
+    padding: 4px;
+    border: solid 1px #999999;
+    background-color: #eeeeee;
+}
+
+/* selection area */
+.tool-selection-area {
+}
+
+.tool-title {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+.tool-selection {
+    display: table;
+    border-spacing: 3px;
+}
+.tool-icon {
+    display: table-cell;
+    margin: 2px;
+}
+
+/* measurement area */
+.tool-measurement-area {
+    height: 250px;
+}
+
+/* input area (maybe move elsewhere?) */
+.input-title {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.input-param {
+    margin-top: 4px;
+}
+.input-label {
+    width: 100px;
+}
+.input-container {
+    width: 100px;
+}
+
+.shape-text-input {
+    margin-bottom: 2px;
+}

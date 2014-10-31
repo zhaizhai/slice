@@ -14,9 +14,9 @@ class PlayerInfo
 
 class LevelDisplay
   TMPL = '''
-  <div>
-    <div class="tc level-name"></div>
-    <div class="tc level-progress"></div>
+  <div class="level-row">
+    <div class="disp-tc level-name"></div>
+    <div class="disp-tc level-progress"></div>
   </div>
   '''
 
@@ -36,6 +36,8 @@ LEVELS = {
 }
 
 window.onload = ->
+  levels_container = ($ document.body).find '.home-levels'
+
   for id, info of LEVELS
     level_info = new LevelInfo {
       level_id: id
@@ -43,21 +45,21 @@ window.onload = ->
       stars: info.stars
       completed: info.completed
     }
-    ($ document.body).append (new LevelDisplay level_info).elt()
+    levels_container.append (new LevelDisplay level_info).elt()
 
-  # testing
-  x = $ '''
-    <div>
-      <input type="text"></input>
-      <button>Evaluate!</button>
-      <div class="result"></div>
-    </div>
-  '''
+  # # testing
+  # x = $ '''
+  #   <div>
+  #     <input type="text"></input>
+  #     <button>Evaluate!</button>
+  #     <div class="result"></div>
+  #   </div>
+  # '''
 
-  (x.find 'button').click =>
-    input = (x.find 'input').val()
-    input = input.replace /\ /g, ''
-    ast = get_syntax_tree input
-    result = evaluate ast, {}, {}
-    (x.find 'div.result').text result
-  ($ document.body).append x
+  # (x.find 'button').click =>
+  #   input = (x.find 'input').val()
+  #   input = input.replace /\ /g, ''
+  #   ast = get_syntax_tree input
+  #   result = evaluate ast, {}, {}
+  #   (x.find 'div.result').text result
+  # ($ document.body).append x

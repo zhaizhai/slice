@@ -1,0 +1,28 @@
+body {
+    font-family: 'Signika', sans-serif;
+    display: table;
+}
+
+.mid-spacer {
+    display: table-cell;
+    width: 50px;
+}
+.left-panel {
+    vertical-align: middle;
+    display: table-cell;
+}
+.right-panel {
+    display: table-cell;
+    height: 600px;
+    width: 300px;
+}
+
+.app-title {
+    font-family: 'Pacifico', cursive;
+    font-size: 40px;
+}
+
+path {
+    shape-rendering: crispEdges;
+}
+
