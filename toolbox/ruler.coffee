@@ -4,14 +4,16 @@ Path = require 'paths-js/path'
 {HookBinding} = require 'levels/base.coffee'
 {Point} = require 'geometry.coffee'
 
+{ToolGraphics} = require 'toolbox/graphics.coffee'
 {SELECTED_ICON, UNSELECTED_ICON} = require 'toolbox/ruler_icon.coffee'
 
 class Ruler extends EventEmitter
   constructor: (@level, @level_data, @scene) ->
     @_start = new HookBinding @level, 3, (pt_id) =>
-      return @_make_node pt_id, 'purple'
+      return @_make_node pt_id, 'selected'
     @_end = new HookBinding @level, 3, (pt_id) =>
-      return @_make_node pt_id, 'purple'
+      return @_make_node pt_id, 'selected'
+    @_gfx = new ToolGraphics @level
 
   _rule_overlay: (start, end) ->
     u = end.diff start
@@ -48,7 +50,7 @@ class Ruler extends EventEmitter
         @level.set_render_hook pt_id, {
           precedence: 0
           render: =>
-            return @_make_node pt_id, 'red'
+            return @_make_node pt_id, 'default'
         }
 
     @scene.mousemove (e) =>
@@ -84,17 +86,9 @@ class Ruler extends EventEmitter
       end_pt = @level.get @_end.get()
       @scene.set_overlay (@_rule_overlay start_pt, end_pt)
 
-  _make_node: (pt_id, color) ->
-    pt = @level.get pt_id
-    return SVG.circle {
-      cx: pt.x, cy: pt.y, r: 6,
-      fill: color, stroke: 'black'
-
-      # mouseenter: (e) =>
-      #   console.log 'mouse enter', pt_id
-      #   # @hover pt_id
-      # mouseleave: (e) =>
-      #   @hover null
+  _make_node: (pt_id, status) ->
+    return @_gfx.make_node pt_id, {
+      status: status
       click: (e) =>
         start = @_start.get()
         end = @_end.get()

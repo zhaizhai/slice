@@ -3,16 +3,18 @@ Path = require 'paths-js/path'
 {EventEmitter} = require 'events'
 {HookBinding} = require 'levels/base.coffee'
 
+{ToolGraphics} = require 'toolbox/graphics.coffee'
 {SELECTED_ICON, UNSELECTED_ICON} = require 'toolbox/locator_icon.coffee'
 
 class Locator extends EventEmitter
   constructor: (@level, @level_data, @scene) ->
     @_selected = new HookBinding @level, 3, (pt_id) =>
-      return @_make_node pt_id, 'purple'
+      return @_make_node pt_id, 'selected'
     @_hover = new HookBinding @level, 1, (pt_id) =>
-      return @_make_node pt_id, 'green'
+      return @_make_node pt_id, 'hover'
     @_highlight = new HookBinding @level, 5, (pt_id) =>
-      return @_make_node pt_id, 'yellow'
+      return @_make_node pt_id, 'hover'
+    @_gfx = new ToolGraphics @level
 
   icons:
     selected: SELECTED_ICON
@@ -24,7 +26,7 @@ class Locator extends EventEmitter
         @level.set_render_hook pt_id, {
           precedence: 0
           render: =>
-            return @_make_node pt_id, 'red'
+            return @_make_node pt_id, 'default'
         }
 
   deactivate: ->
@@ -48,12 +50,9 @@ class Locator extends EventEmitter
     @_highlight.set id
     @emit 'change'
 
-  _make_node: (pt_id, color) ->
-    pt = @level.get pt_id
-    return SVG.circle {
-      cx: pt.x, cy: pt.y, r: 6,
-      fill: color, stroke: 'black'
-
+  _make_node: (pt_id, status) ->
+    return @_gfx.make_node pt_id, {
+      status: status
       mouseenter: (e) =>
         @hover pt_id
       mouseleave: (e) =>

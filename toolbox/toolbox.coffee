@@ -10,7 +10,7 @@ class ToolBox
     </div>
     <div class="toolbox-section tool-measurement-area">
       <div class="tool-action-points"></div>
-      <button>Measure!</button>
+      <div class="tool-status"></div>
       <div class="tool-notebook"></div>
     </div>
   </div>
@@ -37,26 +37,32 @@ class ToolBox
         @_icon_elts[name] = container
         sel_elt.append container
 
-    (@_elt.find 'button').click =>
-      if not @_cur_tool? then return
-      tool = @tools[@_cur_tool]
-
-      result = tool.measure()
-      if not result? then return
-      @ap_used += tool.cost
-
-      @_on_measure result
-      @_update()
-
     @_measurements = []
     @select default_tool
     @_update()
 
+    @_on_tool_change = null
+
   elt: -> @_elt
+
+  _do_measure: ->
+    if not @_cur_tool? then return
+    tool = @tools[@_cur_tool]
+
+    result = tool.measure()
+    if not result? then return
+    @ap_used += tool.cost
+
+    @_on_measure result
+    @_update()
 
   _update: ->
     # TODO: do more updating here
-    (@_elt.find '.tool-action-points').text "#{@ap_used} action points used"
+    pts_txt = if @ap_used is 1
+      "1 action point used"
+    else
+      "#{@ap_used} action points used"
+    (@_elt.find '.tool-action-points').text pts_txt
 
   _deactivate: (name) ->
     tool = @tools[name]
@@ -68,6 +74,8 @@ class ToolBox
     @scene.set_overlay null
     console.log 'deactivating', name
     tool.deactivate()
+    if @_on_tool_change?
+      tool.removeListener 'change', @_on_tool_change
 
   _activate: (name) ->
     tool = @tools[name]
@@ -76,6 +84,17 @@ class ToolBox
 
     console.log 'activating', name
     tool.activate()
+
+    @_on_tool_change = =>
+      status_elt = @_elt.find '.tool-status'
+      status_elt.empty()
+      button = ($ '<button>Measure!</button>').click(@_do_measure.bind @)
+      if not tool.measure()?
+        button.prop 'disabled', true
+      status_elt.append button
+    tool.on 'change', @_on_tool_change
+    @_on_tool_change()
+
     @scene.render()
 
   select: (name) ->

@@ -113,6 +113,14 @@ evaluate = (syntax_tree, functions, variables) ->
 exports.get_syntax_tree = get_syntax_tree
 exports.evaluate = evaluate
 
+exports.evaluate_string = (s) ->
+  s = s.replace /\ /g, ''
+  try
+    ast = get_syntax_tree s
+    return evaluate ast, {}, {}
+  catch e
+    throw new Error "Syntax error in input: \"#{s}\""
+
 
 # # example usage.
 # funz = {f: {inputs: ["z"], output_expression_str: "z+1"} }

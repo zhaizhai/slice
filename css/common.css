@@ -9,6 +9,12 @@ button:hover {
     border-color: #444444;
     background-color: #69b350;
 }
+button:disabled {
+    background-color: #dddddd;
+}
+button[disabled]:hover {
+    border-color: #888888;
+}
 
 .disp-tc {
     display: table-cell;
