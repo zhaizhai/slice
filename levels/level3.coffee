@@ -2,6 +2,7 @@ SVG = require 'svg.coffee'
 Path = require 'paths-js/path'
 {Point, Polygon} = require 'geometry.coffee'
 {BaseLevel} = require 'levels/base.coffee'
+{SquareShape} = require 'input/shape_spec.coffee'
 
 exports.Level3 = new BaseLevel {
   allowed_tools: {
@@ -9,6 +10,7 @@ exports.Level3 = new BaseLevel {
       points: (('p' + idx) for idx in [0...3])
     }
   }
+  input_shape: SquareShape
 
   dims: {
     width: 500
