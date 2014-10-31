@@ -89,5 +89,4 @@ exports.CircleShape =
     }
 
   label: -> @center
-
-  methods:
+  methods: {}
