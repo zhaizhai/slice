@@ -1,0 +1,18 @@
+body {
+    font-family: 'Signika', sans-serif;
+    display: table;
+}
+
+h1 {
+    font-family: 'Pacifico', cursive;
+}
+
+.level-row {
+    width: 300px;
+    height: 50px;
+    margin-top: 6px;
+    background-color: #dddddd;
+    border-radius: 4px;
+}
+.level-name {
+}
