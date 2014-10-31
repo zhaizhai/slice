@@ -60,8 +60,11 @@ exports.SquareShape =
     center: Coords 'Center'
     side: Length 'Side length'
 
-  render: ->
-    throw 'TODO' # TODO
+  svg: ->
+    d = SVG.util.make_closed_path @polygon().points
+    return SVG.path {d}
+
+  label: -> @center
 
   methods:
     polygon: ->
@@ -74,12 +77,17 @@ exports.SquareShape =
         pts.push pt
       return new Polygon pts
 
+
 exports.CircleShape =
   params:
     center: Coords 'Center'
     radius: Length 'Radius'
 
-  render: ->
+  svg: ->
     SVG.circle {
       cx: @center.x, cy: @center.y, r: @radius
     }
+
+  label: -> @center
+
+  methods:

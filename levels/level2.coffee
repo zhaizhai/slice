@@ -1,8 +1,8 @@
 SVG = require 'svg.coffee'
 Path = require 'paths-js/path'
 {Point, Polygon} = require 'geometry.coffee'
-
 {BaseLevel} = require 'levels/base.coffee'
+{SquareShape} = require 'shape_spec.coffee'
 
 Level2Tools = {
   locator: {
@@ -15,6 +15,7 @@ Level2Tools = {
 
 exports.Level2 = new BaseLevel {
   allowed_tools: Level2Tools
+  input_shape: SquareShape
 
   dims: {
     width: 500

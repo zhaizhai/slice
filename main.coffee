@@ -1,8 +1,6 @@
 SVG = require 'svg.coffee'
 LevelLoader = require 'levels/loader.coffee'
-
 {ShapeMaker} = require 'shape_maker.coffee'
-{SquareShape} = require 'shape_spec.coffee'
 
 {ToolBox, setup_tools} = require 'toolbox/toolbox.coffee'
 
@@ -88,14 +86,16 @@ window.onload = ->
   WRONG_RED = '#f2665c'
   RIGHT_GREEN = '#12e632'
 
-  sm = new ShapeMaker SquareShape, (sq) =>
-    poly = sq.polygon()
+  sm = new ShapeMaker level.input_shape, (shape) =>
+    poly = shape.polygon()
 
     {score, err} = level.evaluate poly
     color = if err? then WRONG_RED else RIGHT_GREEN
     disp_text = if err? then "Doesn't fit!" else "#{score}"
+
+    label_pos = shape.label()
     text_elt = SVG.text {
-      x: sq.center.x, y: -sq.center.y,
+      x: label_pos.x, y: -label_pos.y,
       'font-family': 'sans-serif',
       'font-size': '16px', fill: 'black'
       transform: "scale(1, -1)"
