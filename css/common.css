@@ -9,3 +9,10 @@ button:hover {
     border-color: #444444;
     background-color: #69b350;
 }
+
+.disp-tc {
+    display: table-cell;
+}
+.disp-t {
+    display: table;
+}

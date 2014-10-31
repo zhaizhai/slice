@@ -13,10 +13,12 @@ render_to_jq = (tmpl, params) ->
 
 class CoordsInput
   TMPL = '''
-  <div class="input-param">
-    {{input_txt}}
-    <input type="text" class="x-input" placeholder="x-coordinate"></input>
-    <input type="text" class="y-input" placeholder="y-coordinate"></input>
+  <div class="disp-t input-param">
+    <div class="disp-tc input-label">{{input_txt}}</div>
+    <div class="disp-tc input-container">
+      <input type="text" class="shape-text-input x-input" placeholder="x-coordinate"></input>
+      <input type="text" class="shape-text-input y-input" placeholder="y-coordinate"></input>
+    </div>
   </div>
   '''
 
@@ -33,9 +35,11 @@ class CoordsInput
 
 class LengthInput
   TMPL = '''
-  <div class="input-param">
-    {{input_txt}}
-    <input type="text" class="len-input" placeholder="length"></input>
+  <div class="disp-t input-param">
+    <div class="disp-tc input-label">{{input_txt}}</div>
+    <div class="disp-tc input-container">
+      <input type="text" class="shape-text-input len-input" placeholder="length"></input>
+    </div>
   </div>
   '''
 

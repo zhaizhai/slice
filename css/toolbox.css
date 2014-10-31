@@ -37,3 +37,13 @@
 .input-param {
     margin-top: 4px;
 }
+.input-label {
+    width: 100px;
+}
+.input-container {
+    width: 100px;
+}
+
+.shape-text-input {
+    margin-bottom: 2px;
+}
