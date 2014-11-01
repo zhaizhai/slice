@@ -44,7 +44,7 @@ exports.make_axes = make_axes = (dims) ->
 
 class BaseLevel
   REQUIRED_PROPS = [
-    'dims', 'generate', 'evaluate', 'allowed_tools'
+    'dims', 'generate', 'evaluate', 'allowed_tools', 'input_shape',
   ]
 
   constructor: (opts) ->

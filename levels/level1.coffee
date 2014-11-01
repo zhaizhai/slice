@@ -27,9 +27,8 @@ exports.Level1 = new BaseLevel {
   param_choices:
     w: ((100 + 2 * i) for i in [0..50])
 
-  generate: ({
-    w
-  }) ->
+  generate: (@params) ->
+    {w} = @params
     fig = new Polygon [
       new Point w, 0
       new Point 0, w
@@ -65,13 +64,22 @@ exports.Level1 = new BaseLevel {
     container.appendChild @render_nodes()
 
   evaluate: (poly) ->
+    result =
+      opt: @params.w * @params.w
+    too_big = ->
+      result.score = 0
+      result.err = "shape is not enclosed!"
+      return result
+
     fig = @entities.figure
 
     if fig.intersects poly
-      return {score: 0, err: "shape is not enclosed!"}
+      return too_big()
     for pt in fig.points()
       if poly.contains pt
-        return {score: 0, err: "shape is not enclosed!"}
-    return {score: poly.area()}
+        return too_big()
+
+    result.score = poly.area()
+    return result
 
 }

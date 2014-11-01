@@ -89,7 +89,7 @@ window.onload = ->
   sm = new ShapeMaker level.input_shape, (shape) =>
     poly = shape.polygon()
 
-    {score, err} = level.evaluate poly
+    {score, opt, err} = level.evaluate poly
     color = if err? then WRONG_RED else RIGHT_GREEN
     disp_text = if err? then "Doesn't fit!" else "#{score}"
 
@@ -113,6 +113,11 @@ window.onload = ->
       f = (t) -> (t * t * t)
       return (f(x) - f(0)) / (f(1) - f(0))
 
+
+    final_color = if opt? and score >= 0.9999 * opt
+      'gold'
+    else
+      'black'
     scene.animate_overlay {
       fps: 40, duration: 400,
       on_tick: (elapsed) =>
@@ -126,7 +131,7 @@ window.onload = ->
         return SVG.g {}, [
           SVG.path {
             d: d, opacity: 0.9,
-            fill: color, stroke: 'black'
+            fill: color, stroke: final_color
           }
           text_elt
         ]
