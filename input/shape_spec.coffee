@@ -77,7 +77,7 @@ exports.SquareShape =
       return new Polygon pts
 
     svg: ->
-      d = SVG.util.make_closed_path @polygon().points
+      d = SVG.util.make_closed_path @polygon().points()
       return SVG.path {d}
     label: -> @center
 

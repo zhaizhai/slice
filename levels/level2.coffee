@@ -66,15 +66,28 @@ exports.Level2 = new BaseLevel {
     container.appendChild @render_figure()
     container.appendChild @render_nodes()
 
-  evaluate: (poly) ->
-    # TODO
+  _score: (area) ->
+    opt = @params.w * @params.w
+    r = area / opt
+    EPS = 0.001
+    if r >= (1 + EPS)
+      console.log "What?? should be impossible"
+    if r >= (1 - EPS)
+      return 3
+    if r >= 0.95
+      return 2
+    if r >= 0.7
+      return 1
+    return 0
+
+  evaluate: (shape) ->
+    poly = shape.polygon()
     fig = @entities.figure
 
     if fig.intersects poly
-      return {score: 0, err: "shape is not enclosed!"}
+      return {score: -1}
     for pt in fig.points()
       if poly.contains pt
-        return {score: 0, err: "shape is not enclosed!"}
-    return {score: poly.area()}
-
+        return {score: -1}
+    return {score: @_score poly.area()}
 }

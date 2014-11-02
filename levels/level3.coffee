@@ -2,15 +2,16 @@ SVG = require 'svg.coffee'
 Path = require 'paths-js/path'
 {Point, Polygon} = require 'geometry.coffee'
 {BaseLevel} = require 'levels/base.coffee'
-{SquareShape} = require 'input/shape_spec.coffee'
+{CircleShape} = require 'input/shape_spec.coffee'
 
+EPS = 0.0001
 exports.Level3 = new BaseLevel {
   allowed_tools: {
     locator: {
       points: (('p' + idx) for idx in [0...3])
     }
   }
-  input_shape: SquareShape
+  input_shape: CircleShape
 
   dims: {
     width: 500
@@ -59,16 +60,36 @@ exports.Level3 = new BaseLevel {
     container.appendChild @render_figure()
     container.appendChild @render_nodes()
 
-  evaluate: (poly) ->
-    # TODO
+  _score: (r) ->
+    {x, y} = @params
+    opt = (x * y) / (x + y + Math.sqrt(x*x + y*y))
+    console.log 'performance =', r / opt
+
+    if r >= (1 + 2 * EPS) * opt
+      console.log "What?? should be impossible"
+    if r >= (1 - 2 * EPS) * opt
+      return 3
+    if r >= 0.95 * opt
+      return 2
+    if r >= 0.7 * opt
+      return 1
+    return 0
+
+  evaluate: (shape) ->
+    SCORE_TO_MESG =
+      1: 'Good \u2605\u2606\u2606'
+      2: 'Great! \u2605\u2605\u2606'
+      3: 'Perfect! \u2605\u2605\u2605'
+
     fig = @entities.figure
 
-    if fig.intersects poly
-      return {score: 0, err: "shape is not enclosed!"}
-    for pt in fig.points()
-      if poly.contains pt
-        return {score: 0, err: "shape is not enclosed!"}
-    return {score: poly.area()}
+    result = {}
+    if not (fig.contains shape.center, {buffer: shape.radius - EPS})
+      result.score = -1
 
+    else
+      result.score = @_score shape.radius
+
+    return result
 }
 

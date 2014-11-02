@@ -1,6 +1,12 @@
 assert = require 'assert'
 
+exports.EPSILON = EPSILON = 0.001
+
+
 class Point
+  @dot = (p1, p2) ->
+    return p1.x * p2.x + p1.y * p2.y
+
   @dist = (p1, p2) ->
     dx = p1.x - p2.x
     dy = p1.y - p2.y
@@ -28,7 +34,7 @@ class Point
 
 
 class Segment
-  @crosses = (seg1, seg2, tolerance = 0.001) ->
+  @crosses = (seg1, seg2, tolerance = EPSILON) ->
     # TODO: handle degenerate cases
 
     a1 = Point.cross_area (seg2.start.diff seg1.start),
@@ -54,6 +60,21 @@ class Segment
       return false
 
     return true
+
+  @dist_to_pt = (seg, pt) ->
+    s = seg.start.diff(pt)
+    e = seg.end.diff(pt)
+    v = seg.end.diff(seg.start)
+
+    ds = Point.dot s, v
+    de = Point.dot e, v
+    if ds < 0 and de < 0
+      return Point.dist pt, seg.end
+    if ds > 0 and de > 0
+      return Point.dist pt, seg.start
+
+    a = Point.cross_area s, e
+    return Math.abs (a / v.length())
 
   constructor: (@start, @end) ->
 
@@ -82,24 +103,27 @@ class Polygon
           return true
     return false
 
-  contains: (pt, strictly = true) ->
-    [has_pos, has_neg, has_zero] = [false, false, false]
-    # TODO: tolerance
+  contains: (pt, opts = {}) ->
+    {buffer} = opts
+    buffer ?= 0
+    assert buffer >= 0, "Can't have negative buffer"
 
+    [has_pos, has_neg] = [false, false]
     for seg in @segments()
       s = seg.start.diff(pt)
       e = seg.end.diff(pt)
       a = Point.cross_area s, e
+
+      d = Segment.dist_to_pt seg, pt
+      if d < buffer
+        return false
+
       if a < 0
         has_neg = true
-      else if a == 0
-        has_zero = true
-      else
+      else if a > 0
         has_pos = true
 
     if has_neg and has_pos
-      return false
-    if has_zero and strictly
       return false
     return true
 
@@ -112,6 +136,7 @@ class Polygon
       next = pts[idx + 1]
       ret +=  Point.cross_area cur, next
     return Math.abs(ret) / 2
+
 
 
 

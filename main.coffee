@@ -86,12 +86,16 @@ window.onload = ->
   WRONG_RED = '#f2665c'
   RIGHT_GREEN = '#12e632'
 
+  SCORE_TO_MESG =
+    '-1': "Doesn't fit!"
+    0: ''
+    1: 'Good \u2605\u2606\u2606'
+    2: 'Great! \u2605\u2605\u2606'
+    3: 'Perfect! \u2605\u2605\u2605'
   sm = new ShapeMaker level.input_shape, (shape) =>
-    poly = shape.polygon()
-
-    {score, opt, err} = level.evaluate poly
-    color = if err? then WRONG_RED else RIGHT_GREEN
-    disp_text = if err? then "Doesn't fit!" else "#{score}"
+    {score} = level.evaluate shape
+    color = if score is -1 then WRONG_RED else RIGHT_GREEN
+    disp_text = SCORE_TO_MESG[score]
 
     label_pos = shape.label()
     text_elt = SVG.text {
@@ -121,16 +125,14 @@ window.onload = ->
     scene.animate_overlay {
       fps: 40, duration: 400,
       on_tick: (elapsed) =>
-        d = SVG.util.make_closed_path poly.points()
-        return SVG.path {
-          d: d, opacity: (0.1 + 0.8 * (ease elapsed)),
+        return SVG.attrs shape.svg(), {
+          opacity: (0.1 + 0.8 * (ease elapsed)),
           fill: color, stroke: 'black'
         }
       on_end: =>
-        d = SVG.util.make_closed_path poly.points()
         return SVG.g {}, [
-          SVG.path {
-            d: d, opacity: 0.9,
+          SVG.attrs shape.svg(), {
+            opacity: 0.9,
             fill: color, stroke: final_color
           }
           text_elt

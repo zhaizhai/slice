@@ -27,6 +27,11 @@ class SVG
       ret.appendChild child
     return ret
 
+  @attrs = (elt, new_attrs) ->
+    for k, v of new_attrs
+      elt.setAttribute k, v
+    return elt
+
   @root = (width, height) ->
     ret = document.createElementNS SVG_NS, 'svg'
     ret.setAttribute 'width', width
