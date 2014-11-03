@@ -1,5 +1,213 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function() {
+  var EPSILON, Point, Polygon, Segment, assert;
+
+  assert = require('assert');
+
+  exports.EPSILON = EPSILON = 0.001;
+
+  Point = (function() {
+    Point.dot = function(p1, p2) {
+      return p1.x * p2.x + p1.y * p2.y;
+    };
+
+    Point.dist = function(p1, p2) {
+      var dx, dy;
+      dx = p1.x - p2.x;
+      dy = p1.y - p2.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    Point.cross_area = function(p1, p2) {
+      return p1.x * p2.y - p1.y * p2.x;
+    };
+
+    function Point(x, y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    Point.prototype.plus = function(pt) {
+      return new Point(this.x + pt.x, this.y + pt.y);
+    };
+
+    Point.prototype.shift = function(x, y) {
+      return new Point(this.x + x, this.y + y);
+    };
+
+    Point.prototype.diff = function(pt) {
+      return new Point(this.x - pt.x, this.y - pt.y);
+    };
+
+    Point.prototype.length = function() {
+      return Math.sqrt(this.x * this.x + this.y * this.y);
+    };
+
+    Point.prototype.scale = function(r) {
+      return new Point(this.x * r, this.y * r);
+    };
+
+    return Point;
+
+  })();
+
+  Segment = (function() {
+    Segment.crosses = function(seg1, seg2, tolerance) {
+      var a1, a2, b1, b2, eps;
+      if (tolerance == null) {
+        tolerance = EPSILON;
+      }
+      a1 = Point.cross_area(seg2.start.diff(seg1.start), seg2.start.diff(seg1.end));
+      a2 = Point.cross_area(seg2.end.diff(seg1.start), seg2.end.diff(seg1.end));
+      eps = tolerance * seg1.length();
+      if (Math.abs(a1) < eps || Math.abs(a2) < eps) {
+        return false;
+      }
+      if ((a1 < 0) === (a2 < 0)) {
+        return false;
+      }
+      b1 = Point.cross_area(seg1.start.diff(seg2.start), seg1.start.diff(seg2.end));
+      b2 = Point.cross_area(seg1.end.diff(seg2.start), seg1.end.diff(seg2.end));
+      eps = tolerance * seg2.length();
+      if (Math.abs(b1) < eps || Math.abs(b2) < eps) {
+        return false;
+      }
+      if ((b1 < 0) === (b2 < 0)) {
+        return false;
+      }
+      return true;
+    };
+
+    Segment.dist_to_pt = function(seg, pt) {
+      var a, de, ds, e, s, v;
+      s = seg.start.diff(pt);
+      e = seg.end.diff(pt);
+      v = seg.end.diff(seg.start);
+      ds = Point.dot(s, v);
+      de = Point.dot(e, v);
+      if (ds < 0 && de < 0) {
+        return Point.dist(pt, seg.end);
+      }
+      if (ds > 0 && de > 0) {
+        return Point.dist(pt, seg.start);
+      }
+      a = Point.cross_area(s, e);
+      return Math.abs(a / v.length());
+    };
+
+    function Segment(start, end) {
+      this.start = start;
+      this.end = end;
+    }
+
+    Segment.prototype.length = function() {
+      return (this.end.diff(this.start)).length();
+    };
+
+    return Segment;
+
+  })();
+
+  Polygon = (function() {
+    function Polygon(pts) {
+      this.pts = pts;
+      assert(this.pts.length >= 3, "Must have at least 3 points!");
+    }
+
+    Polygon.prototype.points = function() {
+      return this.pts;
+    };
+
+    Polygon.prototype.segments = function() {
+      var cur, idx, next, segs, _i, _len, _ref;
+      segs = [];
+      _ref = this.pts;
+      for (idx = _i = 0, _len = _ref.length; _i < _len; idx = ++_i) {
+        cur = _ref[idx];
+        next = this.pts[(idx + 1) % this.pts.length];
+        segs.push(new Segment(cur, next));
+      }
+      return segs;
+    };
+
+    Polygon.prototype.intersects = function(poly) {
+      var other_segs, seg1, seg2, _i, _j, _len, _len1, _ref;
+      other_segs = poly.segments();
+      _ref = this.segments();
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        seg1 = _ref[_i];
+        for (_j = 0, _len1 = other_segs.length; _j < _len1; _j++) {
+          seg2 = other_segs[_j];
+          if (Segment.crosses(seg1, seg2)) {
+            console.log(seg1, 'crosses', seg2);
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    Polygon.prototype.contains = function(pt, opts) {
+      var a, buffer, d, e, has_neg, has_pos, s, seg, _i, _len, _ref, _ref1;
+      if (opts == null) {
+        opts = {};
+      }
+      buffer = opts.buffer;
+      if (buffer == null) {
+        buffer = 0;
+      }
+      assert(buffer >= 0, "Can't have negative buffer");
+      _ref = [false, false], has_pos = _ref[0], has_neg = _ref[1];
+      _ref1 = this.segments();
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        seg = _ref1[_i];
+        s = seg.start.diff(pt);
+        e = seg.end.diff(pt);
+        a = Point.cross_area(s, e);
+        d = Segment.dist_to_pt(seg, pt);
+        if (d < buffer) {
+          return false;
+        }
+        if (a < 0) {
+          has_neg = true;
+        } else if (a > 0) {
+          has_pos = true;
+        }
+      }
+      if (has_neg && has_pos) {
+        return false;
+      }
+      return true;
+    };
+
+    Polygon.prototype.area = function() {
+      var cur, idx, next, pts, ret, _i, _len, _ref;
+      pts = this.pts.slice();
+      pts.push(this.pts[0]);
+      ret = 0;
+      _ref = this.pts;
+      for (idx = _i = 0, _len = _ref.length; _i < _len; idx = ++_i) {
+        cur = _ref[idx];
+        next = pts[idx + 1];
+        ret += Point.cross_area(cur, next);
+      }
+      return Math.abs(ret) / 2;
+    };
+
+    return Polygon;
+
+  })();
+
+  exports.Point = Point;
+
+  exports.Segment = Segment;
+
+  exports.Polygon = Polygon;
+
+}).call(this);
+
+},{"assert":7}],2:[function(require,module,exports){
+(function() {
   var PRECEDENCE, TOKENS, assert, evaluate, get_syntax_tree, token_type, util,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
@@ -190,7 +398,579 @@
 
 }).call(this);
 
-},{"assert":2,"util":6}],2:[function(require,module,exports){
+},{"assert":7,"util":11}],3:[function(require,module,exports){
+(function (global){
+// Generated by uRequire v{NO_VERSION} - template: 'nodejs' 
+(function (window, global) {
+  
+var __isAMD = !!(typeof define === 'function' && define.amd),
+    __isNode = (typeof exports === 'object'),
+    __isWeb = !__isNode;
+;
+
+module.exports = (function () {
+  var Path;
+  Path = function (init) {
+    var areEqualPoints, instructions, plus, point, printInstrunction, push, verbosify;
+    instructions = init || [];
+    push = function (arr, el) {
+      var copy;
+      copy = arr.slice(0, arr.length);
+      copy.push(el);
+      return copy;
+    };
+    areEqualPoints = function (p1, p2) {
+      return p1[0] === p2[0] && p1[1] === p2[1];
+    };
+    printInstrunction = function (_arg) {
+      var command, params;
+      command = _arg.command, params = _arg.params;
+      return "" + command + " " + params.join(" ");
+    };
+    point = function (_arg, _arg1) {
+      var command, params, prev_x, prev_y;
+      command = _arg.command, params = _arg.params;
+      prev_x = _arg1[0], prev_y = _arg1[1];
+      switch (command) {
+      case "M":
+        return [
+          params[0],
+          params[1]
+        ];
+      case "L":
+        return [
+          params[0],
+          params[1]
+        ];
+      case "H":
+        return [
+          params[0],
+          prev_y
+        ];
+      case "V":
+        return [
+          prev_x,
+          params[0]
+        ];
+      case "Z":
+        return null;
+      case "C":
+        return [
+          params[4],
+          params[5]
+        ];
+      case "S":
+        return [
+          params[2],
+          params[3]
+        ];
+      case "Q":
+        return [
+          params[2],
+          params[3]
+        ];
+      case "T":
+        return [
+          params[0],
+          params[1]
+        ];
+      case "A":
+        return [
+          params[5],
+          params[6]
+        ];
+      }
+    };
+    verbosify = function (keys, f) {
+      return function (a) {
+        var args;
+        args = typeof a === "object" ? keys.map(function (k) {
+          return a[k];
+        }) : arguments;
+        return f.apply(null, args);
+      };
+    };
+    plus = function (instruction) {
+      return Path(push(instructions, instruction));
+    };
+    return {
+      moveto: verbosify([
+        "x",
+        "y"
+      ], function (x, y) {
+        return plus({
+          command: "M",
+          params: [
+            x,
+            y
+          ]
+        });
+      }),
+      lineto: verbosify([
+        "x",
+        "y"
+      ], function (x, y) {
+        return plus({
+          command: "L",
+          params: [
+            x,
+            y
+          ]
+        });
+      }),
+      hlineto: verbosify(["x"], function (x) {
+        return plus({
+          command: "H",
+          params: [x]
+        });
+      }),
+      vlineto: verbosify(["y"], function (y) {
+        return plus({
+          command: "V",
+          params: [y]
+        });
+      }),
+      closepath: function () {
+        return plus({
+          command: "Z",
+          params: []
+        });
+      },
+      curveto: verbosify([
+        "x1",
+        "y1",
+        "x2",
+        "y2",
+        "x",
+        "y"
+      ], function (x1, y1, x2, y2, x, y) {
+        return plus({
+          command: "C",
+          params: [
+            x1,
+            y1,
+            x2,
+            y2,
+            x,
+            y
+          ]
+        });
+      }),
+      smoothcurveto: verbosify([
+        "x2",
+        "y2",
+        "x",
+        "y"
+      ], function (x2, y2, x, y) {
+        return plus({
+          command: "S",
+          params: [
+            x2,
+            y2,
+            x,
+            y
+          ]
+        });
+      }),
+      qcurveto: verbosify([
+        "x1",
+        "y1",
+        "x",
+        "y"
+      ], function (x1, y1, x, y) {
+        return plus({
+          command: "Q",
+          params: [
+            x1,
+            y1,
+            x,
+            y
+          ]
+        });
+      }),
+      smoothqcurveto: verbosify([
+        "x",
+        "y"
+      ], function (x, y) {
+        return plus({
+          command: "T",
+          params: [
+            x,
+            y
+          ]
+        });
+      }),
+      arc: verbosify([
+        "rx",
+        "ry",
+        "xrot",
+        "large_arc_flag",
+        "sweep_flag",
+        "x",
+        "y"
+      ], function (rx, ry, xrot, large_arc_flag, sweep_flag, x, y) {
+        return plus({
+          command: "A",
+          params: [
+            rx,
+            ry,
+            xrot,
+            large_arc_flag,
+            sweep_flag,
+            x,
+            y
+          ]
+        });
+      }),
+      print: function () {
+        return instructions.map(printInstrunction).join(" ");
+      },
+      points: function () {
+        var instruction, prev, ps, _fn, _i, _len;
+        ps = [];
+        prev = [
+          0,
+          0
+        ];
+        _fn = function () {
+          var p;
+          p = point(instruction, prev);
+          prev = p;
+          if (p) {
+            return ps.push(p);
+          }
+        };
+        for (_i = 0, _len = instructions.length; _i < _len; _i++) {
+          instruction = instructions[_i];
+          _fn();
+        }
+        return ps;
+      },
+      instructions: function () {
+        return instructions.slice(0, instructions.length);
+      },
+      connect: function (path) {
+        var first, last, newInstructions;
+        last = this.points().slice(-1)[0];
+        first = path.points()[0];
+        newInstructions = path.instructions().slice(1);
+        if (!areEqualPoints(last, first)) {
+          newInstructions.unshift({
+            command: "L",
+            params: first
+          });
+        }
+        return Path(this.instructions().concat(newInstructions));
+      }
+    };
+  };
+  return function () {
+    return Path();
+  };
+}).call(this);
+
+
+}).call(this, (typeof exports === 'object' ? global : window), (typeof exports === 'object' ? global : window))
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],4:[function(require,module,exports){
+(function() {
+  var Path, Point, SVG, assert, k, to_radians, v,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+    __slice = [].slice;
+
+  assert = require('assert');
+
+  Path = require('paths-js/path');
+
+  Point = require('geometry.coffee').Point;
+
+  SVG = (function() {
+    var MOUSE_EVTS, PRIMITIVES, SVG_NS, create_elt, make_primitive, prim, _i, _len;
+
+    function SVG() {}
+
+    SVG_NS = "http://www.w3.org/2000/svg";
+
+    MOUSE_EVTS = ['mouseover', 'mouseout', 'mouseenter', 'mouseleave', 'click'];
+
+    PRIMITIVES = ['g', 'circle', 'path', 'animate', 'text'];
+
+    create_elt = function(type, attrs, children) {
+      var child, k, ret, v, _i, _len;
+      if (children == null) {
+        children = [];
+      }
+      ret = document.createElementNS(SVG_NS, type);
+      for (k in attrs) {
+        v = attrs[k];
+        if (__indexOf.call(MOUSE_EVTS, k) >= 0) {
+          (function(v) {
+            return ret.addEventListener(k, function() {
+              var args;
+              args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+              return v.apply(ret, args);
+            });
+          })(v);
+          continue;
+        }
+        ret.setAttribute(k, v);
+      }
+      for (_i = 0, _len = children.length; _i < _len; _i++) {
+        child = children[_i];
+        ret.appendChild(child);
+      }
+      return ret;
+    };
+
+    SVG.attrs = function(elt, new_attrs) {
+      var k, v;
+      for (k in new_attrs) {
+        v = new_attrs[k];
+        elt.setAttribute(k, v);
+      }
+      return elt;
+    };
+
+    SVG.root = function(width, height) {
+      var ret;
+      ret = document.createElementNS(SVG_NS, 'svg');
+      ret.setAttribute('width', width);
+      ret.setAttribute('height', height);
+      return ret;
+    };
+
+    make_primitive = function(prim) {
+      return SVG[prim] = function(attrs, children) {
+        return create_elt(prim, attrs, children);
+      };
+    };
+
+    for (_i = 0, _len = PRIMITIVES.length; _i < _len; _i++) {
+      prim = PRIMITIVES[_i];
+      make_primitive(prim);
+    }
+
+    return SVG;
+
+  })();
+
+  to_radians = function(deg) {
+    return Math.PI * deg / 180;
+  };
+
+  exports.util = {
+    arrow: function(p, opts) {
+      var angle, direction, end, length, start, th1, th2, tip;
+      tip = opts.tip, length = opts.length, angle = opts.angle, direction = opts.direction;
+      assert((tip != null) && (length != null) && (angle != null) && (direction != null) && (tip instanceof Point));
+      direction = to_radians(direction);
+      angle = to_radians(angle);
+      th1 = Math.PI + direction - angle;
+      start = tip.shift(length * (Math.cos(th1)), length * (Math.sin(th1)));
+      th2 = Math.PI + direction + angle;
+      end = tip.shift(length * (Math.cos(th2)), length * (Math.sin(th2)));
+      p = p.moveto(start).lineto(tip).lineto(end);
+      return p;
+    },
+    make_closed_path: function(pts) {
+      var pt, ret, _i, _len, _ref;
+      ret = Path().moveto(pts[0]);
+      _ref = pts.slice(1);
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        pt = _ref[_i];
+        ret = ret.lineto(pt);
+      }
+      return ret.closepath().print();
+    }
+  };
+
+  for (k in SVG) {
+    v = SVG[k];
+    exports[k] = v;
+  }
+
+}).call(this);
+
+},{"assert":7,"geometry.coffee":1,"paths-js/path":3}],5:[function(require,module,exports){
+(function() {
+  var LOCATOR_SVG_PATHS, Path, SVG, border, cross, make_icon, ticks, _ref;
+
+  SVG = require('svg.coffee');
+
+  Path = require('paths-js/path');
+
+  LOCATOR_SVG_PATHS = function() {
+    var border, corners, cross, cur_x, cur_y, dk, dx, dy, i, k, l, lambda, next_x, next_y, offset, r, s, tick_x, tick_y, ticks, x, y, _i, _j, _ref, _ref1, _ref2, _ref3, _ref4;
+    r = 6;
+    s = 50;
+    border = Path().moveto(s - r, 0).arc(r, r, 0, 0, 1, s, r).lineto(s, s - r).arc(r, r, 0, 0, 1, s - r, s).lineto(r, s).arc(r, r, 0, 0, 1, 0, s - r).lineto(0, r).arc(r, r, 0, 0, 1, r, 0).closepath();
+    l = 0.35 * s;
+    cross = Path().moveto(s / 2 - l, s / 2).lineto(s / 2 + l, s / 2).moveto(s / 2, s / 2 - l).lineto(s / 2, s / 2 + l);
+    k = 5;
+    corners = [[0, 0], [s, 0], [s, s], [0, s]];
+    ticks = Path();
+    for (i = _i = 0; _i < 4; i = ++_i) {
+      _ref = corners[i], cur_x = _ref[0], cur_y = _ref[1];
+      _ref1 = corners[(i + 1) % 4], next_x = _ref1[0], next_y = _ref1[1];
+      _ref2 = [next_x - cur_x, next_y - cur_y], dx = _ref2[0], dy = _ref2[1];
+      _ref3 = [-5 * dy / s, 5 * dx / s], tick_x = _ref3[0], tick_y = _ref3[1];
+      for (i = _j = 0; 0 <= k ? _j < k : _j > k; i = 0 <= k ? ++_j : --_j) {
+        dk = i - Math.floor(k / 2);
+        offset = dk / (k - 1) * (s - 3 * r);
+        lambda = 1 / 2 + offset / s;
+        _ref4 = [cur_x + lambda * dx, cur_y + lambda * dy], x = _ref4[0], y = _ref4[1];
+        ticks = ticks.moveto(x, y).lineto(x + tick_x, y + tick_y);
+      }
+    }
+    return {
+      border: border,
+      cross: cross,
+      ticks: ticks
+    };
+  };
+
+  make_icon = function(svg) {
+    var ret, svg_container;
+    ret = $('<div></div>');
+    svg_container = SVG.root(52, 52);
+    svg_container.appendChild(svg);
+    ret.append(svg_container);
+    return ret;
+  };
+
+  _ref = LOCATOR_SVG_PATHS(), border = _ref.border, cross = _ref.cross, ticks = _ref.ticks;
+
+  exports.UNSELECTED_ICON = make_icon(SVG.g({
+    transform: "translate(1, 1)"
+  }, [
+    SVG.path({
+      d: border.print(),
+      fill: 'none',
+      stroke: 'gray',
+      'stroke-width': 2
+    }), SVG.path({
+      d: cross.print(),
+      fill: 'none',
+      stroke: 'gray',
+      'stroke-width': 3
+    }), SVG.path({
+      d: ticks.print(),
+      fill: 'none',
+      stroke: 'gray',
+      'stroke-width': 2
+    })
+  ]));
+
+  exports.SELECTED_ICON = make_icon(SVG.g({
+    transform: "translate(1, 1)"
+  }, [
+    SVG.path({
+      d: border.print(),
+      fill: '#ffffaa',
+      stroke: 'black',
+      'stroke-width': 2
+    }), SVG.path({
+      d: cross.print(),
+      fill: 'none',
+      stroke: 'black',
+      'stroke-width': 3
+    }), SVG.path({
+      d: ticks.print(),
+      fill: 'none',
+      stroke: 'black',
+      'stroke-width': 2
+    })
+  ]));
+
+}).call(this);
+
+},{"paths-js/path":3,"svg.coffee":4}],6:[function(require,module,exports){
+(function() {
+  var Path, RULER_SVG_PATHS, SVG, border, make_icon, ruler, ticks, _ref;
+
+  SVG = require('svg.coffee');
+
+  Path = require('paths-js/path');
+
+  RULER_SVG_PATHS = function() {
+    var a, b, border, gap, i, k, offset, r, ruler, s, start_x, start_y, t, ticks, _i, _ref, _ref1;
+    r = 6;
+    s = 50;
+    border = Path().moveto(s - r, 0).arc(r, r, 0, 0, 1, s, r).lineto(s, s - r).arc(r, r, 0, 0, 1, s - r, s).lineto(r, s).arc(r, r, 0, 0, 1, 0, s - r).lineto(0, r).arc(r, r, 0, 0, 1, r, 0).closepath();
+    _ref = [0.15 * s, 0.05 * s], a = _ref[0], b = _ref[1];
+    ruler = Path().moveto(a - b, s - a - b).lineto(a + b, s - a + b).lineto(s - a + b, a + b).lineto(s - a - b, a - b).closepath();
+    k = 8;
+    ticks = Path();
+    t = 0.04 * s;
+    _ref1 = [a + b, s - a + b], start_x = _ref1[0], start_y = _ref1[1];
+    gap = s - 2 * a;
+    for (i = _i = 1; 1 <= k ? _i < k : _i > k; i = 1 <= k ? ++_i : --_i) {
+      offset = i * gap / k;
+      ticks = ticks.moveto(start_x + offset, start_y - offset).lineto(start_x + offset - t, start_y - offset - t);
+    }
+    return {
+      border: border,
+      ruler: ruler,
+      ticks: ticks
+    };
+  };
+
+  make_icon = function(svg) {
+    var ret, svg_container;
+    ret = $('<div></div>');
+    svg_container = SVG.root(52, 52);
+    svg_container.appendChild(svg);
+    ret.append(svg_container);
+    return ret;
+  };
+
+  _ref = RULER_SVG_PATHS(), border = _ref.border, ruler = _ref.ruler, ticks = _ref.ticks;
+
+  exports.UNSELECTED_ICON = make_icon(SVG.g({
+    transform: "translate(1, 1)"
+  }, [
+    SVG.path({
+      d: border.print(),
+      fill: 'none',
+      stroke: 'gray',
+      'stroke-width': 2
+    }), SVG.path({
+      d: ruler.print(),
+      fill: 'none',
+      stroke: 'gray',
+      'stroke-width': 2
+    }), SVG.path({
+      d: ticks.print(),
+      fill: 'none',
+      stroke: 'gray',
+      'stroke-width': 2
+    })
+  ]));
+
+  exports.SELECTED_ICON = make_icon(SVG.g({
+    transform: "translate(1, 1)"
+  }, [
+    SVG.path({
+      d: border.print(),
+      fill: '#aaaaff',
+      stroke: 'black',
+      'stroke-width': 2
+    }), SVG.path({
+      d: ruler.print(),
+      fill: '#ffdd00',
+      stroke: 'black',
+      'stroke-width': 2
+    }), SVG.path({
+      d: ticks.print(),
+      fill: 'none',
+      stroke: 'black',
+      'stroke-width': 2
+    })
+  ]));
+
+}).call(this);
+
+},{"paths-js/path":3,"svg.coffee":4}],7:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -552,7 +1332,7 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":6}],3:[function(require,module,exports){
+},{"util/":11}],8:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -577,7 +1357,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],4:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -642,14 +1422,14 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],5:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],6:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -1239,9 +2019,9 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":5,"_process":4,"inherits":3}],7:[function(require,module,exports){
+},{"./support/isBuffer":10,"_process":9,"inherits":8}],12:[function(require,module,exports){
 (function() {
-  var LEVELS, LevelDisplay, LevelInfo, PlayerInfo, evaluate, get_syntax_tree, _ref;
+  var ICONS, LEVELS, LevelDisplay, LevelInfo, PlayerInfo, evaluate, get_syntax_tree, _ref;
 
   _ref = require('input/eval.coffee'), evaluate = _ref.evaluate, get_syntax_tree = _ref.get_syntax_tree;
 
@@ -1301,10 +2081,14 @@ function hasOwnProperty(obj, prop) {
     }
   };
 
+  ICONS = {
+    locator: require('toolbox/locator_icon.coffee'),
+    ruler: require('toolbox/ruler_icon.coffee')
+  };
+
   window.onload = function() {
-    var id, info, level_info, levels_container, _results;
+    var cell_h, cell_w, col, icon, id, info, level_info, levels_container, player_info, row, tool, tool_container, _i, _len, _ref1, _ref2, _ref3;
     levels_container = ($(document.body)).find('.home-levels');
-    _results = [];
     for (id in LEVELS) {
       info = LEVELS[id];
       level_info = new LevelInfo({
@@ -1313,12 +2097,35 @@ function hasOwnProperty(obj, prop) {
         stars: info.stars,
         completed: info.completed
       });
-      _results.push(levels_container.append((new LevelDisplay(level_info)).elt()));
+      levels_container.append((new LevelDisplay(level_info)).elt());
     }
-    return _results;
+    player_info = new PlayerInfo({
+      gold: 0,
+      tools: ['locator', 'ruler']
+    });
+    tool_container = ($('<div></div>')).css({
+      width: 500,
+      height: 600,
+      position: 'absolute'
+    });
+    _ref1 = [60, 60], cell_w = _ref1[0], cell_h = _ref1[1];
+    _ref2 = [0, 0], row = _ref2[0], col = _ref2[1];
+    _ref3 = player_info.tools;
+    for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+      tool = _ref3[_i];
+      icon = ICONS[tool].SELECTED_ICON;
+      icon.css({
+        position: 'absolute',
+        top: row * cell_h + (cell_h - icon.height()) / 2,
+        left: col * cell_w + (cell_w - icon.width()) / 2
+      });
+      tool_container.append(icon);
+      col += 1;
+    }
+    return ($(document.body)).find('.home-tools').append(tool_container);
   };
 
 }).call(this);
 
-},{"input/eval.coffee":1}]},{},[7]);
+},{"input/eval.coffee":2,"toolbox/locator_icon.coffee":5,"toolbox/ruler_icon.coffee":6}]},{},[12]);
 

@@ -3,10 +3,19 @@ body {
     display: table;
 }
 
-h1 {
+.game-title {
     font-family: 'Pacifico', cursive;
+    font-size: 40px;
+}
+h1 {
 }
 
+.home-container {
+    border-spacing: 12px;
+}
+
+
+/* levels */
 .level-row {
     width: 300px;
     height: 50px;
@@ -15,4 +24,15 @@ h1 {
     border-radius: 4px;
 }
 .level-name {
+}
+
+/* tools */
+.toolbox-title {
+    font-size: 20px;
+}
+.home-tools {
+    width: 500;
+    height: 600;
+    border-radius: 4px;
+    background-color: #dddddd;
 }
