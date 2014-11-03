@@ -1,10 +1,16 @@
 SVG = require 'svg.coffee'
 Path = require 'paths-js/path'
 {Point, Polygon} = require 'geometry.coffee'
-{BaseLevel} = require 'levels/base.coffee'
 {CircleShape} = require 'input/shape_spec.coffee'
 
+{BaseLevel} = require 'levels/base.coffee'
+{TieredScorer} = require 'levels/level_util.coffee'
+
 EPS = 0.0001
+SCORER = new TieredScorer [
+  0.7, 0.95, (1 - 2 * EPS)
+], (1 + 2 * EPS)
+
 exports.Level3 = new BaseLevel {
   allowed_tools: {
     locator: {
@@ -60,36 +66,13 @@ exports.Level3 = new BaseLevel {
     container.appendChild @render_figure()
     container.appendChild @render_nodes()
 
-  _score: (r) ->
+  evaluate: (shape) ->
+    fig = @entities.figure
+    if not (fig.contains shape.center, {buffer: shape.radius - EPS})
+      return {score: -1}
+
     {x, y} = @params
     opt = (x * y) / (x + y + Math.sqrt(x*x + y*y))
-    console.log 'performance =', r / opt
-
-    if r >= (1 + 2 * EPS) * opt
-      console.log "What?? should be impossible"
-    if r >= (1 - 2 * EPS) * opt
-      return 3
-    if r >= 0.95 * opt
-      return 2
-    if r >= 0.7 * opt
-      return 1
-    return 0
-
-  evaluate: (shape) ->
-    SCORE_TO_MESG =
-      1: 'Good \u2605\u2606\u2606'
-      2: 'Great! \u2605\u2605\u2606'
-      3: 'Perfect! \u2605\u2605\u2605'
-
-    fig = @entities.figure
-
-    result = {}
-    if not (fig.contains shape.center, {buffer: shape.radius - EPS})
-      result.score = -1
-
-    else
-      result.score = @_score shape.radius
-
-    return result
+    return {score: SCORER.score (shape.radius / opt)}
 }
 
