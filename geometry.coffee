@@ -138,12 +138,14 @@ class Polygon
     return Math.abs(ret) / 2
 
 
+class Circle
+  constructor: (@center, @radius) ->
 
 
 exports.Point = Point
 exports.Segment = Segment
 exports.Polygon = Polygon
-
+exports.Circle = Circle
 
 # # test code
 # seg1 = new Segment (new Point 100, 0), (new Point 0, 100)

@@ -78,11 +78,11 @@ class ToolBox
       tool.removeListener 'change', @_on_tool_change
 
   _activate: (name) ->
+    console.log 'activating', name
+
     tool = @tools[name]
     @_icon_elts[name].empty()
     @_icon_elts[name].append tool.icons.selected
-
-    console.log 'activating', name
     tool.activate()
 
     @_on_tool_change = =>
@@ -123,11 +123,13 @@ class ToolBox
 
 {Locator} = require 'toolbox/locator.coffee'
 {Ruler} = require 'toolbox/ruler.coffee'
+{RadiusFinder} = require 'toolbox/radius_finder.coffee'
 
 exports.setup_tools = (level, scene) ->
   TOOLS =
     locator: Locator
     ruler: Ruler
+    radius_finder: RadiusFinder
 
   tools = {}
   for name, tool_type of TOOLS
@@ -147,7 +149,7 @@ exports.setup_tools = (level, scene) ->
       level: level
       tools: tools
       scene: scene
-      default_tool: 'locator'
+      # default_tool: 'locator'
     }
   }
 
