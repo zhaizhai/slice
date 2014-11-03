@@ -1,10 +1,16 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function() {
-  var Point, Polygon, Segment, assert;
+  var EPSILON, Point, Polygon, Segment, assert;
 
   assert = require('assert');
 
+  exports.EPSILON = EPSILON = 0.001;
+
   Point = (function() {
+    Point.dot = function(p1, p2) {
+      return p1.x * p2.x + p1.y * p2.y;
+    };
+
     Point.dist = function(p1, p2) {
       var dx, dy;
       dx = p1.x - p2.x;
@@ -49,7 +55,7 @@
     Segment.crosses = function(seg1, seg2, tolerance) {
       var a1, a2, b1, b2, eps;
       if (tolerance == null) {
-        tolerance = 0.001;
+        tolerance = EPSILON;
       }
       a1 = Point.cross_area(seg2.start.diff(seg1.start), seg2.start.diff(seg1.end));
       a2 = Point.cross_area(seg2.end.diff(seg1.start), seg2.end.diff(seg1.end));
@@ -70,6 +76,23 @@
         return false;
       }
       return true;
+    };
+
+    Segment.dist_to_pt = function(seg, pt) {
+      var a, de, ds, e, s, v;
+      s = seg.start.diff(pt);
+      e = seg.end.diff(pt);
+      v = seg.end.diff(seg.start);
+      ds = Point.dot(s, v);
+      de = Point.dot(e, v);
+      if (ds < 0 && de < 0) {
+        return Point.dist(pt, seg.end);
+      }
+      if (ds > 0 && de > 0) {
+        return Point.dist(pt, seg.start);
+      }
+      a = Point.cross_area(s, e);
+      return Math.abs(a / v.length());
     };
 
     function Segment(start, end) {
@@ -124,30 +147,34 @@
       return false;
     };
 
-    Polygon.prototype.contains = function(pt, strictly) {
-      var a, e, has_neg, has_pos, has_zero, s, seg, _i, _len, _ref, _ref1;
-      if (strictly == null) {
-        strictly = true;
+    Polygon.prototype.contains = function(pt, opts) {
+      var a, buffer, d, e, has_neg, has_pos, s, seg, _i, _len, _ref, _ref1;
+      if (opts == null) {
+        opts = {};
       }
-      _ref = [false, false, false], has_pos = _ref[0], has_neg = _ref[1], has_zero = _ref[2];
+      buffer = opts.buffer;
+      if (buffer == null) {
+        buffer = 0;
+      }
+      assert(buffer >= 0, "Can't have negative buffer");
+      _ref = [false, false], has_pos = _ref[0], has_neg = _ref[1];
       _ref1 = this.segments();
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         seg = _ref1[_i];
         s = seg.start.diff(pt);
         e = seg.end.diff(pt);
         a = Point.cross_area(s, e);
+        d = Segment.dist_to_pt(seg, pt);
+        if (d < buffer) {
+          return false;
+        }
         if (a < 0) {
           has_neg = true;
-        } else if (a === 0) {
-          has_zero = true;
-        } else {
+        } else if (a > 0) {
           has_pos = true;
         }
       }
       if (has_neg && has_pos) {
-        return false;
-      }
-      if (has_zero && strictly) {
         return false;
       }
       return true;
@@ -542,7 +569,7 @@
       },
       svg: function() {
         var d;
-        d = SVG.util.make_closed_path(this.polygon().points);
+        d = SVG.util.make_closed_path(this.polygon().points());
         return SVG.path({
           d: d
         });
@@ -635,7 +662,7 @@
   BaseLevel = (function() {
     var REQUIRED_PROPS;
 
-    REQUIRED_PROPS = ['dims', 'generate', 'evaluate', 'allowed_tools'];
+    REQUIRED_PROPS = ['dims', 'generate', 'evaluate', 'allowed_tools', 'input_shape'];
 
     function BaseLevel(opts) {
       var k, prop, v, _i, _len;
@@ -809,9 +836,10 @@
         return _results;
       })()
     },
-    generate: function(_arg) {
+    generate: function(params) {
       var fig, pt, w, _i, _len, _ref1, _results;
-      w = _arg.w;
+      this.params = params;
+      w = this.params.w;
       fig = new Polygon([new Point(w, 0), new Point(0, w), new Point(-w, 0), new Point(0, -w)]);
       this.add('figure', fig);
       _ref1 = fig.points();
@@ -857,13 +885,32 @@
       container.appendChild(this.render_figure());
       return container.appendChild(this.render_nodes());
     },
-    evaluate: function(poly) {
-      var fig, pt, _i, _len, _ref1;
+    _score: function(area) {
+      var EPS, opt, r;
+      opt = this.params.w * this.params.w;
+      r = area / opt;
+      EPS = 0.001;
+      if (r >= (1 + EPS)) {
+        console.log("What?? should be impossible");
+      }
+      if (r >= (1 - EPS)) {
+        return 3;
+      }
+      if (r >= 0.95) {
+        return 2;
+      }
+      if (r >= 0.7) {
+        return 1;
+      }
+      return 0;
+    },
+    evaluate: function(shape) {
+      var fig, poly, pt, _i, _len, _ref1;
+      poly = shape.polygon();
       fig = this.entities.figure;
       if (fig.intersects(poly)) {
         return {
-          score: 0,
-          err: "shape is not enclosed!"
+          score: -1
         };
       }
       _ref1 = fig.points();
@@ -871,13 +918,12 @@
         pt = _ref1[_i];
         if (poly.contains(pt)) {
           return {
-            score: 0,
-            err: "shape is not enclosed!"
+            score: -1
           };
         }
       }
       return {
-        score: poly.area()
+        score: this._score(poly.area())
       };
     }
   });
@@ -999,13 +1045,32 @@
       container.appendChild(this.render_figure());
       return container.appendChild(this.render_nodes());
     },
-    evaluate: function(poly) {
-      var fig, pt, _k, _len, _ref1;
+    _score: function(area) {
+      var EPS, opt, r;
+      opt = this.params.w * this.params.w;
+      r = area / opt;
+      EPS = 0.001;
+      if (r >= (1 + EPS)) {
+        console.log("What?? should be impossible");
+      }
+      if (r >= (1 - EPS)) {
+        return 3;
+      }
+      if (r >= 0.95) {
+        return 2;
+      }
+      if (r >= 0.7) {
+        return 1;
+      }
+      return 0;
+    },
+    evaluate: function(shape) {
+      var fig, poly, pt, _k, _len, _ref1;
+      poly = shape.polygon();
       fig = this.entities.figure;
       if (fig.intersects(poly)) {
         return {
-          score: 0,
-          err: "shape is not enclosed!"
+          score: -1
         };
       }
       _ref1 = fig.points();
@@ -1013,13 +1078,12 @@
         pt = _ref1[_k];
         if (poly.contains(pt)) {
           return {
-            score: 0,
-            err: "shape is not enclosed!"
+            score: -1
           };
         }
       }
       return {
-        score: poly.area()
+        score: this._score(poly.area())
       };
     }
   });
@@ -1028,7 +1092,7 @@
 
 },{"geometry.coffee":1,"input/shape_spec.coffee":4,"levels/base.coffee":5,"paths-js/path":11,"svg.coffee":12}],8:[function(require,module,exports){
 (function() {
-  var BaseLevel, Path, Point, Polygon, SVG, SquareShape, idx, _i, _j, _ref, _results, _results1;
+  var BaseLevel, CircleShape, EPS, Path, Point, Polygon, SVG, idx, _i, _j, _ref, _results, _results1;
 
   SVG = require('svg.coffee');
 
@@ -1038,7 +1102,9 @@
 
   BaseLevel = require('levels/base.coffee').BaseLevel;
 
-  SquareShape = require('input/shape_spec.coffee').SquareShape;
+  CircleShape = require('input/shape_spec.coffee').CircleShape;
+
+  EPS = 0.0001;
 
   exports.Level3 = new BaseLevel({
     allowed_tools: {
@@ -1053,7 +1119,7 @@
         })()
       }
     },
-    input_shape: SquareShape,
+    input_shape: CircleShape,
     dims: {
       width: 500,
       height: 500,
@@ -1121,28 +1187,42 @@
       container.appendChild(this.render_figure());
       return container.appendChild(this.render_nodes());
     },
-    evaluate: function(poly) {
-      var fig, pt, _k, _len, _ref1;
-      fig = this.entities.figure;
-      if (fig.intersects(poly)) {
-        return {
-          score: 0,
-          err: "shape is not enclosed!"
-        };
+    _score: function(r) {
+      var opt, x, y, _ref1;
+      _ref1 = this.params, x = _ref1.x, y = _ref1.y;
+      opt = (x * y) / (x + y + Math.sqrt(x * x + y * y));
+      console.log('performance =', r / opt);
+      if (r >= (1 + 2 * EPS) * opt) {
+        console.log("What?? should be impossible");
       }
-      _ref1 = fig.points();
-      for (_k = 0, _len = _ref1.length; _k < _len; _k++) {
-        pt = _ref1[_k];
-        if (poly.contains(pt)) {
-          return {
-            score: 0,
-            err: "shape is not enclosed!"
-          };
-        }
+      if (r >= (1 - 2 * EPS) * opt) {
+        return 3;
       }
-      return {
-        score: poly.area()
+      if (r >= 0.95 * opt) {
+        return 2;
+      }
+      if (r >= 0.7 * opt) {
+        return 1;
+      }
+      return 0;
+    },
+    evaluate: function(shape) {
+      var SCORE_TO_MESG, fig, result;
+      SCORE_TO_MESG = {
+        1: 'Good \u2605\u2606\u2606',
+        2: 'Great! \u2605\u2605\u2606',
+        3: 'Perfect! \u2605\u2605\u2605'
       };
+      fig = this.entities.figure;
+      result = {};
+      if (!(fig.contains(shape.center, {
+        buffer: shape.radius - EPS
+      }))) {
+        result.score = -1;
+      } else {
+        result.score = this._score(shape.radius);
+      }
+      return result;
     }
   });
 
@@ -2084,6 +2164,15 @@ module.exports = (function () {
         ret.appendChild(child);
       }
       return ret;
+    };
+
+    SVG.attrs = function(elt, new_attrs) {
+      var k, v;
+      for (k in new_attrs) {
+        v = new_attrs[k];
+        elt.setAttribute(k, v);
+      }
+      return elt;
     };
 
     SVG.root = function(width, height) {
@@ -4346,7 +4435,7 @@ function hasOwnProperty(obj, prop) {
   })();
 
   window.onload = function() {
-    var RIGHT_GREEN, WRONG_RED, level, level_id, scene, sm, tb;
+    var RIGHT_GREEN, SCORE_TO_MESG, WRONG_RED, level, level_id, scene, sm, tb;
     level_id = window.location.hash.slice(1);
     level = LevelLoader.load(level_id);
     if (level == null) {
@@ -4361,13 +4450,19 @@ function hasOwnProperty(obj, prop) {
     ($('.left-panel'))[0].appendChild(scene.svg_elt());
     WRONG_RED = '#f2665c';
     RIGHT_GREEN = '#12e632';
+    SCORE_TO_MESG = {
+      '-1': "Doesn't fit!",
+      0: '',
+      1: 'Good \u2605\u2606\u2606',
+      2: 'Great! \u2605\u2605\u2606',
+      3: 'Perfect! \u2605\u2605\u2605'
+    };
     sm = new ShapeMaker(level.input_shape, (function(_this) {
       return function(shape) {
-        var color, disp_text, ease, err, label_pos, poly, score, text_elt, _ref1;
-        poly = shape.polygon();
-        _ref1 = level.evaluate(poly), score = _ref1.score, err = _ref1.err;
-        color = err != null ? WRONG_RED : RIGHT_GREEN;
-        disp_text = err != null ? "Doesn't fit!" : "" + score;
+        var color, disp_text, ease, final_color, label_pos, score, text_elt;
+        score = level.evaluate(shape).score;
+        color = score === -1 ? WRONG_RED : RIGHT_GREEN;
+        disp_text = SCORE_TO_MESG[score];
         label_pos = shape.label();
         text_elt = SVG.text({
           x: label_pos.x,
@@ -4386,28 +4481,23 @@ function hasOwnProperty(obj, prop) {
           };
           return (f(x) - f(0)) / (f(1) - f(0));
         };
+        final_color = (typeof opt !== "undefined" && opt !== null) && score >= 0.9999 * opt ? 'gold' : 'black';
         return scene.animate_overlay({
           fps: 40,
           duration: 400,
           on_tick: function(elapsed) {
-            var d;
-            d = SVG.util.make_closed_path(poly.points());
-            return SVG.path({
-              d: d,
+            return SVG.attrs(shape.svg(), {
               opacity: 0.1 + 0.8 * (ease(elapsed)),
               fill: color,
               stroke: 'black'
             });
           },
           on_end: function() {
-            var d;
-            d = SVG.util.make_closed_path(poly.points());
             return SVG.g({}, [
-              SVG.path({
-                d: d,
+              SVG.attrs(shape.svg(), {
                 opacity: 0.9,
                 fill: color,
-                stroke: 'black'
+                stroke: final_color
               }), text_elt
             ]);
           }
