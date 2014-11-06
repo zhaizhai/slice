@@ -4,17 +4,13 @@ Path = require 'paths-js/path'
 {BaseLevel} = require 'levels/base.coffee'
 {SquareShape} = require 'input/shape_spec.coffee'
 
-Level1Tools = {
-  locator: {
-    points: (('p' + idx) for idx in [0...4])
-  }
-  ruler: {
-    points: (('p' + idx) for idx in [0...4])
-  }
-}
-
 exports.Level1 = new BaseLevel {
-  allowed_tools: Level1Tools
+  allowed_tools:
+    locator:
+      points: (('p' + idx) for idx in [0...4])
+    ruler:
+      points: (('p' + idx) for idx in [0...4])
+
   input_shape: SquareShape
 
   dims: {

@@ -4,6 +4,8 @@ LevelLoader = require 'levels/loader.coffee'
 
 {ToolBox, setup_tools} = require 'toolbox/toolbox.coffee'
 
+{$ajax} = require 'http_util.coffee'
+
 class Scene
   standardize_evt = (e) ->
     return {
@@ -67,6 +69,14 @@ class Scene
 
 
 
+report_score = (stars, level_id) ->
+  data =
+    levelID: level_id
+    stars: stars
+  $ajax.post 'complete_level', data, (err, res) ->
+    console.log 'complete_level:', err, res
+
+
 window.onload = ->
   level_id = window.location.hash.slice(1)
   level = LevelLoader.load level_id
@@ -94,6 +104,8 @@ window.onload = ->
     3: 'Perfect! \u2605\u2605\u2605'
   sm = new ShapeMaker level.input_shape, (shape) =>
     {score} = level.evaluate shape
+    report_score score, level_id # fires off $ajax.post
+
     color = if score is -1 then WRONG_RED else RIGHT_GREEN
     disp_text = SCORE_TO_MESG[score]
 

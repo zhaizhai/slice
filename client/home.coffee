@@ -23,17 +23,19 @@ class LevelDisplay
   constructor: (@level_info) ->
     @_elt = $ TMPL
     (@_elt.find 'div.level-name').text @level_info.name
-    (@_elt.find 'div.level-progress').text "#{@level_info.stars} out of 5"
+
+    progress_txt = ""
+    for i in [0...3]
+      if @level_info.stars > i
+        progress_txt += "\u2605"
+      else
+        progress_txt += "\u2606"
+    (@_elt.find 'div.level-progress').text progress_txt
 
     @_elt.click =>
-      window.location.href = "index.html\##{@level_info.level_id}"
+      window.location.href = "level\##{@level_info.level_id}"
 
   elt: -> @_elt
-
-LEVELS = {
-  l1: {name: "Level 1", stars: 3, completed: false}
-  l2: {name: "Level 2", stars: 3, completed: false}
-}
 
 ICONS = {
   locator: (require 'toolbox/locator_icon.coffee')
@@ -43,22 +45,21 @@ ICONS = {
 window.onload = ->
   levels_container = ($ document.body).find '.home-levels'
 
-  for id, info of LEVELS
+  for info in JS_DATA.LevelData
+    name = "Level " + info.LevelID.slice(1) # TODO
+
     level_info = new LevelInfo {
-      level_id: id
-      name: info.name
-      stars: info.stars
-      completed: info.completed
+      level_id: info.LevelID
+      name: name # TODO
+      stars: info.Stars
     }
     levels_container.append (new LevelDisplay level_info).elt()
 
   player_info = new PlayerInfo {
-    gold: 0
-    tools: [
-      'locator', 'ruler'
-    ]
+    gold: JS_DATA.UserInfo.Gold
+    tools: JS_DATA.UserInfo.Tools ? [] # TODO
   }
-
+  ($ document.body).find('.gold-count').text "Gold: #{player_info.gold}"
 
   tool_container = ($ '<div></div>').css {
     width: 500
@@ -68,6 +69,7 @@ window.onload = ->
 
   [cell_w, cell_h] = [60, 60]
   [row, col] = [0, 0]
+  entries_per_row = 5
   for tool in player_info.tools
     icon = ICONS[tool].SELECTED_ICON
     icon.css {
@@ -76,7 +78,11 @@ window.onload = ->
       left: col * cell_w + (cell_w - icon.width()) / 2
     }
     tool_container.append icon
-    col += 1 # TODO
+    col += 1
+    if col >= entries_per_row
+      col = 0
+      row += 1
+
   ($ document.body).find('.home-tools').append tool_container
 
 

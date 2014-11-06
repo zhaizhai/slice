@@ -27,12 +27,16 @@ h1 {
 }
 
 /* tools */
-.toolbox-title {
-    font-size: 20px;
+.tools-header {
+    width: 100%;
 }
 .home-tools {
     width: 500;
     height: 600;
     border-radius: 4px;
     background-color: #dddddd;
+}
+
+.gold-count {
+    width: 85px;
 }

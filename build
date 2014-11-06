@@ -2,7 +2,7 @@
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 proj_root_dir=$script_dir
-compiled_js_dir=${script_dir}/compiled_js
+compiled_js_dir=${script_dir}/client/compiled_js
 # jquery_filename="jquery-1.9.1.min.js"
 
 function compile {

@@ -21,7 +21,7 @@ if [ -e ~/.bashrc ]; then
 fi
 
 export SLICE_DEV=true
-export PATH=${PATH}:${ROOT_DIR}/scripts
+export PATH=${PATH}:/usr/local/lib/go_appengine:${ROOT_DIR}/scripts
 
 function setup_node_path {
     project_dirs=""
@@ -29,7 +29,7 @@ function setup_node_path {
     # TODO: this default path is probably system dependent...
     default_path=/usr/local/lib/node_modules
 
-    np=${NODE_PATH}:${default_path}:${ROOT_DIR}
+    np=${NODE_PATH}:${default_path}:${ROOT_DIR}/client
     for x in $project_dirs; do
         np=${np}:${ROOT_DIR}/$x
     done
@@ -37,6 +37,8 @@ function setup_node_path {
 }
 
 setup_node_path
+
+export GOPATH=${GOPATH}:${ROOT_DIR}/server
 
 PS1="\[\e[5;31;1m\]slice-dev\[\e[0m\] $PS1"
 export PS1
