@@ -1,13 +1,17 @@
 assert = require 'assert'
 util = require 'util'
 
-TOKENS = {
-  OPERATION:  '^*/+-'
-  FUNCTION:   'fgh'
-  VARIABLE:   'xyzw'
-  CONSTANT:   '01234567890.'
-  OPEN_PAREN:  '('
-  CLOSE_PAREN: ')'
+DEFAULT_FUNCTIONS = ['sin','cos','tan','sec','csc','cot', \
+                     'log','sqrt','ceil','floor']
+
+TOKEN_REGEX = {
+  VARIABLE:    /^[a-zA-Z][a-zA-Z0-9]*/
+  FUNCTION:    /^[a-zA-Z][a-zA-Z0-9]*\(/
+  NUMBER:      /^[-+]?[0-9]*\.?[0-9]+/
+  OPERATION:   /^[\^*/+-]/
+  OPEN_PAREN:  /^\(/
+  CLOSE_PAREN: /^\)/
+  COMMA:       /^,/
 }
 
 PRECEDENCE = {
@@ -18,72 +22,135 @@ PRECEDENCE = {
   '-' : 1
 }
 
-token_type = (token_char) ->
-  for k,v of TOKENS
-    if token_char in v then return k
-  assert false, "token type invalid"
-  return 'INVALID'
+# returns the longest prefix of some token type.
+get_prefix = (expression_str, token_type) ->
+  return "" unless match = TOKEN_REGEX[token_type].exec(expression_str)
+  [prefix] = match
+  return prefix
 
-# deal with spaces in the expression_str
-# deal with functions other than fgh & variables other than xyz.
+# do sanity checks when tokenizing.
+# check matched parentheses, make sure # ) never gt. than # (
+# check no empty parens.
+# allow commas, parse function args properly
 # right now does sanity asserts for valid input.
 #     in future, give better debug/helpful msgs, maybe don't assert.
+# assert that it has only valid characters in it.
+tokenize = (expression_str) ->
+  token_list = []
+  ix = 0
+  while ix < expression_str.length
+    substr = expression_str.slice(ix, expression_str.length)
+    c = expression_str[ix]
+
+    if c == ' '
+      ix += 1
+      continue
+
+    function_prefix = get_prefix(substr, 'FUNCTION')
+    if function_prefix.length > 0
+      token_list.push({token_type: 'FUNCTION', token_name: function_prefix.slice(0, function_prefix.length-1)})
+      token_list.push({token_type: 'OPEN_PAREN', token_name: '('})
+      ix += function_prefix.length
+      continue
+
+    variable_prefix = get_prefix(substr, 'VARIABLE')
+    if variable_prefix.length > 0
+      token_list.push({token_type: 'VARIABLE', token_name: variable_prefix})
+      ix += variable_prefix.length
+      continue
+
+    number_prefix = get_prefix(substr, 'NUMBER')
+    if (number_prefix.length > 0 and
+        (token_list.length == 0 or \
+         token_list[token_list.length - 1].token_type in \
+             ['OPERATION','OPEN_PAREN','CLOSE_PAREN','COMMA']))
+      token_list.push({token_type: 'NUMBER', token_name: number_prefix})
+      ix += number_prefix.length
+      continue
+
+    token_type_matched = false
+    for k,v of TOKEN_REGEX
+      if v.exec(c)?
+        token_list.push({token_type: k, token_name: c})
+        ix += 1
+        token_type_matched = true
+        break
+    if token_type_matched
+      continue
+
+    assert false, "Token invalid #{substr}"
+  return token_list
+
 # optimize tree.. addition can have more than 2 args (children).
-# optimize products without the * sign. e.g. abc is product a*b*c.
-# allow other functions like: sin cos tan (csc sec cot) log...
+# deal with functions with multiple args (parse commas)
 get_syntax_tree = (expression_str) ->
-  # console.log "get syntax tree of " , expression_str
-  # assert that it has only valid characters in it.
   assert expression_str.length > 0
-  nesting_depth = 0
+  token_list = tokenize(expression_str)
+  return get_syntax_tree_helper(token_list)
 
+get_syntax_tree_helper = (token_list) ->
+  assert token_list.length > 0
+  # this is the number of nested parentheses around a token
+  depth = 0
+
+  # find the outermost operation for the root node.
+  # this is the lowest precedence operation (or rightmost if all precedences are equal)
   best_token_index = -1
-  best_token = ''
-  best_nesting_depth = -1
-  for i in [0...expression_str.length]
-    c = expression_str[i]
-    switch token_type(c)
-      when 'OPEN_PAREN' then nesting_depth += 1
-      when 'CLOSE_PAREN' then nesting_depth -= 1
+  best_depth = -1
+  for i in [0...token_list.length]
+    t = token_list[i]
+    switch t.token_type
+      when 'OPEN_PAREN' then depth += 1
+      when 'CLOSE_PAREN' then depth -= 1
       when 'OPERATION'
-        if best_nesting_depth == -1 or nesting_depth < best_nesting_depth or (nesting_depth == best_nesting_depth and PRECEDENCE[c] <= PRECEDENCE[best_token])
+        if (best_token_index == -1 or depth < best_depth or \
+            (depth == best_depth and \
+             PRECEDENCE[t.token_name] <= \
+                 PRECEDENCE[token_list[best_token_index].token_name]))
           best_token_index = i
-          best_token = c
-          best_nesting_depth = nesting_depth
-    assert nesting_depth >= 0
-  assert nesting_depth == 0
-
-  if best_nesting_depth == 0
+          best_depth = depth
+    assert depth >= 0
+  assert depth == 0
+  # if there exists an operation outside all parentheses, choose it for the root.
+  if best_depth == 0
     assert best_token_index > 0
-    assert best_token_index < expression_str.length
-    left_str = expression_str.substring(0, best_token_index)
-    right_str = expression_str.substring(best_token_index + 1, expression_str.length)
-    return {token_type: token_type(best_token), token_name: best_token, children: [get_syntax_tree(left_str), get_syntax_tree(right_str)]}
+    assert best_token_index < token_list.length
+    left_token_list = token_list.slice(0, best_token_index)
+    right_token_list = token_list.slice(best_token_index + 1, token_list.length)
+    best_token = token_list[best_token_index]
+    return {token_type: best_token.token_type, token_name: best_token.token_name, \
+            children: [get_syntax_tree_helper(left_token_list), \
+                       get_syntax_tree_helper(right_token_list)]}
 
-  switch token_type(expression_str[0])
-    when 'FUNCTION'
-      assert token_type(expression_str[1]) == 'OPEN_PAREN'
-      assert token_type(expression_str[expression_str.length - 1]) == 'CLOSE_PAREN'
-      function_args = expression_str.substring(2, expression_str.length - 1).split ","
-      return {token_type: 'FUNCTION', token_name: expression_str[0], children: (get_syntax_tree(elt) for elt in function_args)}
-    when 'OPEN_PAREN'
-      assert token_type(expression_str[expression_str.length - 1]) == 'CLOSE_PAREN'
-      return get_syntax_tree(expression_str.substring(1, expression_str.length - 1))
-    when 'VARIABLE' then return {token_type: 'VARIABLE', token_name: expression_str}
-    when 'CONSTANT' then return {token_type: 'CONSTANT', token_name: expression_str}
+  # if there is no operation at depth zero, then check what else it could be.
 
+  t = token_list[0]
+  if t.token_type in ['FUNCTION']
+    assert token_list.length >= 3
+    assert token_list[1].token_type == 'OPEN_PAREN'
+    assert token_list[token_list.length - 1].token_type == 'CLOSE_PAREN'
+    # for now, assume there's only one function arg. fix later.
+    function_args = token_list.slice(2, token_list.length - 1)
+    return {token_type: t.token_type, \
+            token_name: t.token_name, \
+            children: [get_syntax_tree_helper(function_args)]}
+  if t.token_type in ['VARIABLE', 'NUMBER']
+    assert token_list.length == 1
+    return {token_type: t.token_type, token_name: t.token_name}
+  if t.token_type in ['OPEN_PAREN']
+    assert token_list[token_list.length-1].token_type == 'CLOSE_PAREN'
+    return get_syntax_tree_helper(token_list.slice(1, token_list.length - 1))
   assert false, "invalid"
 
 # assume function and variable namespace don't collide for now.
-evaluate = (syntax_tree, functions, variables) ->
-  # console.log "evaluate ", syntax_tree, functions, variables
+evaluate = (syntax_tree, user_functions, user_variables) ->
   switch syntax_tree.token_type
-    when 'CONSTANT' then return parseFloat(syntax_tree.token_name)
+    when 'NUMBER' then return parseFloat(syntax_tree.token_name)
     when 'VARIABLE'
-      assert syntax_tree.token_name of variables
-      return variables[syntax_tree.token_name]
+      assert syntax_tree.token_name of user_variables
+      return user_variables[syntax_tree.token_name]
     when 'OPERATION'
-      evaluated_children = (evaluate(elt, functions, variables) for elt in syntax_tree.children)
+      evaluated_children = (evaluate(elt, user_functions, user_variables) for elt in syntax_tree.children)
       switch syntax_tree.token_name
         when '+' then return evaluated_children.reduce (t, s) -> t+s
         when '*' then return evaluated_children.reduce (t, s) -> t*s
@@ -98,38 +165,27 @@ evaluate = (syntax_tree, functions, variables) ->
           assert evaluated_children.length == 2
           return evaluated_children[0] - evaluated_children[1]
     when 'FUNCTION'
-      assert syntax_tree.token_name of functions
-      fn = functions[syntax_tree.token_name]
+      assert syntax_tree.token_name of user_functions
+      fn = user_functions[syntax_tree.token_name]
       assert fn.inputs.length == syntax_tree.children.length
 
-      evaluated_children = (evaluate(elt, functions, variables) for elt in syntax_tree.children)
+      evaluated_children = (evaluate(elt, user_functions, user_variables) for elt in syntax_tree.children)
       sub_tree = get_syntax_tree(fn.output_expression_str)
-      more_variables = variables
+      more_variables = user_variables
       for i in [0...fn.inputs.length]
         more_variables[fn.inputs[i]] = evaluated_children[i]
-      return evaluate(sub_tree, functions, more_variables)
+      return evaluate(sub_tree, user_functions, more_variables)
   assert false
 
+exports.tokenize = tokenize
 exports.get_syntax_tree = get_syntax_tree
+exports.get_syntax_tree_helper = get_syntax_tree_helper
 exports.evaluate = evaluate
 
 exports.evaluate_string = (s) ->
-  s = s.replace /\ /g, ''
   try
-    ast = get_syntax_tree s
+    ast = get_syntax_tree_helper s
     return evaluate ast, {}, {}
   catch e
     throw new Error "Syntax error in input: \"#{s}\""
 
-
-# # example usage.
-# funz = {f: {inputs: ["z"], output_expression_str: "z+1"} }
-# varz = {x: 0.5, y: 5}
-# tree = get_syntax_tree("x^2+f(1+3/y)*(y)")
-# console.log util.inspect(tree, {depth:null})
-# console.log "eval", evaluate(tree, funz, varz)
-
-
-# t = get_syntax_tree("30.5+5*x-2+x^6")
-# console.log util.inspect(t, {depth:null})
-# console.log "eval", evaluate(t, funz, varz)
