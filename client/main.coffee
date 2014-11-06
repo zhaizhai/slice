@@ -151,7 +151,9 @@ window.onload = ->
         ]
     }
 
-  ($ '.right-panel').prepend ($ '<div class="app-title">Slice</div>')
+  title = ($ '<div class="app-title">Slice</div>').click =>
+    window.location.href = "/"
+  ($ '.right-panel').prepend title
   ($ '.right-panel').append sm.elt()
 
 

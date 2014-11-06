@@ -92,6 +92,7 @@ type HomeTmplArgs struct {
 	JS_DATA string
 }
 type HomeTmplData struct {
+	UserDisplayName string
 	UserInfo model.UserInfo
 	LevelData []model.LevelCompleted
 }
@@ -109,6 +110,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmplData := &HomeTmplData{
+		UserDisplayName: u.String(),
 		UserInfo: *info,
 		LevelData: []model.LevelCompleted{},
 	}

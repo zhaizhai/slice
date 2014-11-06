@@ -3,17 +3,22 @@ body {
     display: table;
 }
 
+/* main header */
+.home-header {
+    width: 100%;
+}
 .game-title {
     font-family: 'Pacifico', cursive;
     font-size: 40px;
 }
-h1 {
+.logged-in-name {
+    text-align: right;
 }
 
-.home-container {
+
+.home-body {
     border-spacing: 12px;
 }
-
 
 /* levels */
 .level-row {

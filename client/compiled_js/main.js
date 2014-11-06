@@ -266,20 +266,22 @@
 
 },{"assert":24}],3:[function(require,module,exports){
 (function() {
-  var PRECEDENCE, TOKENS, assert, evaluate, get_syntax_tree, token_type, util,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  var DEFAULT_FUNCTIONS, PRECEDENCE, TOKEN_REGEX, assert, evaluate, get_prefix, get_syntax_tree, get_syntax_tree_helper, tokenize, util;
 
   assert = require('assert');
 
   util = require('util');
 
-  TOKENS = {
-    OPERATION: '^*/+-',
-    FUNCTION: 'fgh',
-    VARIABLE: 'xyzw',
-    CONSTANT: '01234567890.',
-    OPEN_PAREN: '(',
-    CLOSE_PAREN: ')'
+  DEFAULT_FUNCTIONS = ['sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'log', 'sqrt', 'ceil', 'floor'];
+
+  TOKEN_REGEX = {
+    VARIABLE: /^[a-zA-Z][a-zA-Z0-9]*/,
+    FUNCTION: /^[a-zA-Z][a-zA-Z0-9]*\(/,
+    NUMBER: /^[-+]?[0-9]*\.?[0-9]+/,
+    OPERATION: /^[\^*/+-]/,
+    OPEN_PAREN: /^\(/,
+    CLOSE_PAREN: /^\)/,
+    COMMA: /^,/
   };
 
   PRECEDENCE = {
@@ -290,98 +292,155 @@
     '-': 1
   };
 
-  token_type = function(token_char) {
-    var k, v;
-    for (k in TOKENS) {
-      v = TOKENS[k];
-      if (__indexOf.call(v, token_char) >= 0) {
-        return k;
-      }
+  get_prefix = function(expression_str, token_type) {
+    var match, prefix;
+    if (!(match = TOKEN_REGEX[token_type].exec(expression_str))) {
+      return "";
     }
-    assert(false, "token type invalid");
-    return 'INVALID';
+    prefix = match[0];
+    return prefix;
+  };
+
+  tokenize = function(expression_str) {
+    var c, function_prefix, ix, k, number_prefix, substr, token_list, token_type_matched, v, variable_prefix, _ref;
+    token_list = [];
+    ix = 0;
+    while (ix < expression_str.length) {
+      substr = expression_str.slice(ix, expression_str.length);
+      c = expression_str[ix];
+      if (c === ' ') {
+        ix += 1;
+        continue;
+      }
+      function_prefix = get_prefix(substr, 'FUNCTION');
+      if (function_prefix.length > 0) {
+        token_list.push({
+          token_type: 'FUNCTION',
+          token_name: function_prefix.slice(0, function_prefix.length - 1)
+        });
+        token_list.push({
+          token_type: 'OPEN_PAREN',
+          token_name: '('
+        });
+        ix += function_prefix.length;
+        continue;
+      }
+      variable_prefix = get_prefix(substr, 'VARIABLE');
+      if (variable_prefix.length > 0) {
+        token_list.push({
+          token_type: 'VARIABLE',
+          token_name: variable_prefix
+        });
+        ix += variable_prefix.length;
+        continue;
+      }
+      number_prefix = get_prefix(substr, 'NUMBER');
+      if (number_prefix.length > 0 && (token_list.length === 0 || ((_ref = token_list[token_list.length - 1].token_type) === 'OPERATION' || _ref === 'OPEN_PAREN' || _ref === 'CLOSE_PAREN' || _ref === 'COMMA'))) {
+        token_list.push({
+          token_type: 'NUMBER',
+          token_name: number_prefix
+        });
+        ix += number_prefix.length;
+        continue;
+      }
+      token_type_matched = false;
+      for (k in TOKEN_REGEX) {
+        v = TOKEN_REGEX[k];
+        if (v.exec(c) != null) {
+          token_list.push({
+            token_type: k,
+            token_name: c
+          });
+          ix += 1;
+          token_type_matched = true;
+          break;
+        }
+      }
+      if (token_type_matched) {
+        continue;
+      }
+      assert(false, "Token invalid " + substr);
+    }
+    return token_list;
   };
 
   get_syntax_tree = function(expression_str) {
-    var best_nesting_depth, best_token, best_token_index, c, elt, function_args, i, left_str, nesting_depth, right_str, _i, _ref;
+    var token_list;
     assert(expression_str.length > 0);
-    nesting_depth = 0;
+    token_list = tokenize(expression_str);
+    return get_syntax_tree_helper(token_list);
+  };
+
+  get_syntax_tree_helper = function(token_list) {
+    var best_depth, best_token, best_token_index, depth, function_args, i, left_token_list, right_token_list, t, _i, _ref, _ref1, _ref2, _ref3;
+    assert(token_list.length > 0);
+    depth = 0;
     best_token_index = -1;
-    best_token = '';
-    best_nesting_depth = -1;
-    for (i = _i = 0, _ref = expression_str.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-      c = expression_str[i];
-      switch (token_type(c)) {
+    best_depth = -1;
+    for (i = _i = 0, _ref = token_list.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+      t = token_list[i];
+      switch (t.token_type) {
         case 'OPEN_PAREN':
-          nesting_depth += 1;
+          depth += 1;
           break;
         case 'CLOSE_PAREN':
-          nesting_depth -= 1;
+          depth -= 1;
           break;
         case 'OPERATION':
-          if (best_nesting_depth === -1 || nesting_depth < best_nesting_depth || (nesting_depth === best_nesting_depth && PRECEDENCE[c] <= PRECEDENCE[best_token])) {
+          if (best_token_index === -1 || depth < best_depth || (depth === best_depth && PRECEDENCE[t.token_name] <= PRECEDENCE[token_list[best_token_index].token_name])) {
             best_token_index = i;
-            best_token = c;
-            best_nesting_depth = nesting_depth;
+            best_depth = depth;
           }
       }
-      assert(nesting_depth >= 0);
+      assert(depth >= 0);
     }
-    assert(nesting_depth === 0);
-    if (best_nesting_depth === 0) {
+    assert(depth === 0);
+    if (best_depth === 0) {
       assert(best_token_index > 0);
-      assert(best_token_index < expression_str.length);
-      left_str = expression_str.substring(0, best_token_index);
-      right_str = expression_str.substring(best_token_index + 1, expression_str.length);
+      assert(best_token_index < token_list.length);
+      left_token_list = token_list.slice(0, best_token_index);
+      right_token_list = token_list.slice(best_token_index + 1, token_list.length);
+      best_token = token_list[best_token_index];
       return {
-        token_type: token_type(best_token),
-        token_name: best_token,
-        children: [get_syntax_tree(left_str), get_syntax_tree(right_str)]
+        token_type: best_token.token_type,
+        token_name: best_token.token_name,
+        children: [get_syntax_tree_helper(left_token_list), get_syntax_tree_helper(right_token_list)]
       };
     }
-    switch (token_type(expression_str[0])) {
-      case 'FUNCTION':
-        assert(token_type(expression_str[1]) === 'OPEN_PAREN');
-        assert(token_type(expression_str[expression_str.length - 1]) === 'CLOSE_PAREN');
-        function_args = expression_str.substring(2, expression_str.length - 1).split(",");
-        return {
-          token_type: 'FUNCTION',
-          token_name: expression_str[0],
-          children: (function() {
-            var _j, _len, _results;
-            _results = [];
-            for (_j = 0, _len = function_args.length; _j < _len; _j++) {
-              elt = function_args[_j];
-              _results.push(get_syntax_tree(elt));
-            }
-            return _results;
-          })()
-        };
-      case 'OPEN_PAREN':
-        assert(token_type(expression_str[expression_str.length - 1]) === 'CLOSE_PAREN');
-        return get_syntax_tree(expression_str.substring(1, expression_str.length - 1));
-      case 'VARIABLE':
-        return {
-          token_type: 'VARIABLE',
-          token_name: expression_str
-        };
-      case 'CONSTANT':
-        return {
-          token_type: 'CONSTANT',
-          token_name: expression_str
-        };
+    t = token_list[0];
+    if ((_ref1 = t.token_type) === 'FUNCTION') {
+      assert(token_list.length >= 3);
+      assert(token_list[1].token_type === 'OPEN_PAREN');
+      assert(token_list[token_list.length - 1].token_type === 'CLOSE_PAREN');
+      function_args = token_list.slice(2, token_list.length - 1);
+      return {
+        token_type: t.token_type,
+        token_name: t.token_name,
+        children: [get_syntax_tree_helper(function_args)]
+      };
+    }
+    if ((_ref2 = t.token_type) === 'VARIABLE' || _ref2 === 'NUMBER') {
+      assert(token_list.length === 1);
+      return {
+        token_type: t.token_type,
+        token_name: t.token_name
+      };
+    }
+    if ((_ref3 = t.token_type) === 'OPEN_PAREN') {
+      assert(token_list[token_list.length - 1].token_type === 'CLOSE_PAREN');
+      return get_syntax_tree_helper(token_list.slice(1, token_list.length - 1));
     }
     return assert(false, "invalid");
   };
 
-  evaluate = function(syntax_tree, functions, variables) {
+  evaluate = function(syntax_tree, user_functions, user_variables) {
     var elt, evaluated_children, fn, i, more_variables, sub_tree, _i, _ref;
     switch (syntax_tree.token_type) {
-      case 'CONSTANT':
+      case 'NUMBER':
         return parseFloat(syntax_tree.token_name);
       case 'VARIABLE':
-        assert(syntax_tree.token_name in variables);
-        return variables[syntax_tree.token_name];
+        assert(syntax_tree.token_name in user_variables);
+        return user_variables[syntax_tree.token_name];
       case 'OPERATION':
         evaluated_children = (function() {
           var _i, _len, _ref, _results;
@@ -389,7 +448,7 @@
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             elt = _ref[_i];
-            _results.push(evaluate(elt, functions, variables));
+            _results.push(evaluate(elt, user_functions, user_variables));
           }
           return _results;
         })();
@@ -415,8 +474,8 @@
         }
         break;
       case 'FUNCTION':
-        assert(syntax_tree.token_name in functions);
-        fn = functions[syntax_tree.token_name];
+        assert(syntax_tree.token_name in user_functions);
+        fn = user_functions[syntax_tree.token_name];
         assert(fn.inputs.length === syntax_tree.children.length);
         evaluated_children = (function() {
           var _i, _len, _ref, _results;
@@ -424,29 +483,32 @@
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             elt = _ref[_i];
-            _results.push(evaluate(elt, functions, variables));
+            _results.push(evaluate(elt, user_functions, user_variables));
           }
           return _results;
         })();
         sub_tree = get_syntax_tree(fn.output_expression_str);
-        more_variables = variables;
+        more_variables = user_variables;
         for (i = _i = 0, _ref = fn.inputs.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
           more_variables[fn.inputs[i]] = evaluated_children[i];
         }
-        return evaluate(sub_tree, functions, more_variables);
+        return evaluate(sub_tree, user_functions, more_variables);
     }
     return assert(false);
   };
 
+  exports.tokenize = tokenize;
+
   exports.get_syntax_tree = get_syntax_tree;
+
+  exports.get_syntax_tree_helper = get_syntax_tree_helper;
 
   exports.evaluate = evaluate;
 
   exports.evaluate_string = function(s) {
     var ast, e;
-    s = s.replace(/\ /g, '');
     try {
-      ast = get_syntax_tree(s);
+      ast = get_syntax_tree_helper(s);
       return evaluate(ast, {}, {});
     } catch (_error) {
       e = _error;
@@ -4900,7 +4962,7 @@ function hasOwnProperty(obj, prop) {
   };
 
   window.onload = function() {
-    var RIGHT_GREEN, SCORE_TO_MESG, WRONG_RED, level, level_id, scene, sm, tb;
+    var RIGHT_GREEN, SCORE_TO_MESG, WRONG_RED, level, level_id, scene, sm, tb, title;
     level_id = window.location.hash.slice(1);
     level = LevelLoader.load(level_id);
     if (level == null) {
@@ -4970,7 +5032,12 @@ function hasOwnProperty(obj, prop) {
         });
       };
     })(this));
-    ($('.right-panel')).prepend($('<div class="app-title">Slice</div>'));
+    title = ($('<div class="app-title">Slice</div>')).click((function(_this) {
+      return function() {
+        return window.location.href = "/";
+      };
+    })(this));
+    ($('.right-panel')).prepend(title);
     return ($('.right-panel')).append(sm.elt());
   };
 

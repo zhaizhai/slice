@@ -43,8 +43,9 @@ ICONS = {
 }
 
 window.onload = ->
-  levels_container = ($ document.body).find '.home-levels'
+  ($ document.body).find('.logged-in-name').text JS_DATA.UserDisplayName
 
+  levels_container = ($ document.body).find '.home-levels'
   for info in JS_DATA.LevelData
     name = "Level " + info.LevelID.slice(1) # TODO
 
@@ -85,20 +86,3 @@ window.onload = ->
 
   ($ document.body).find('.home-tools').append tool_container
 
-
-  # # testing
-  # x = $ '''
-  #   <div>
-  #     <input type="text"></input>
-  #     <button>Evaluate!</button>
-  #     <div class="result"></div>
-  #   </div>
-  # '''
-
-  # (x.find 'button').click =>
-  #   input = (x.find 'input').val()
-  #   input = input.replace /\ /g, ''
-  #   ast = get_syntax_tree input
-  #   result = evaluate ast, {}, {}
-  #   (x.find 'div.result').text result
-  # ($ document.body).append x
