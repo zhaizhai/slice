@@ -184,7 +184,7 @@ exports.evaluate = evaluate
 
 exports.evaluate_string = (s) ->
   try
-    ast = get_syntax_tree_helper s
+    ast = get_syntax_tree s
     return evaluate ast, {}, {}
   catch e
     throw new Error "Syntax error in input: \"#{s}\""
