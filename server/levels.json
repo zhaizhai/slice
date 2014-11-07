@@ -1,15 +1,15 @@
 {
-  "l1": {
-    "GoldSequence": [10, 10, 80]
-  },
-  "l2": {
-    "GoldSequence": [10, 10, 80]
-  },
-  "l3": {
-     "GoldSequence": [20, 20, 160]
-  },
-  "l4": {
-    "GoldSequence": [20, 20, 160]
-  }
+    "l1": {
+        "GoldSequence": [10, 10, 80]
+    },
+    "l2": {
+        "GoldSequence": [10, 10, 80]
+    },
+    "l3": {
+        "GoldSequence": [20, 20, 160]
+    },
+    "l4": {
+        "GoldSequence": [20, 20, 160]
+    }
 }
 

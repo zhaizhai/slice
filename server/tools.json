@@ -1,0 +1,20 @@
+{
+    "locator": {
+        "name": "Locator",
+        "price": 0,
+        "energy_cost": 100,
+        "description": "A basic tool that tells you the exact x- and y-coordinates of a point. However, it uses a lot of energy."
+    },
+    "ruler": {
+        "name": "Ruler",
+        "price": 200,
+        "energy_cost": 20,
+        "description": "Able to measure the distance between two points for a low energy cost, the ruler is useful in many situations."
+    },
+    "radius_finder": {
+        "name": "Radius Finder",
+        "price": 500,
+        "energy_cost": 30,
+        "description": "The radius finder's name is self-explanatory: it finds the radius of a circle."
+    }
+}

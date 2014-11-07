@@ -218,7 +218,53 @@
 
 }).call(this);
 
-},{"assert":7}],2:[function(require,module,exports){
+},{"assert":10}],2:[function(require,module,exports){
+(function() {
+  var $ajax, assert;
+
+  assert = require('assert');
+
+  exports.$ajax = $ajax = function(endpoint, data, req_type, cb) {
+    var on_error, on_success;
+    assert(req_type === 'get' || req_type === 'post');
+    if (req_type === 'post') {
+      data = JSON.stringify(data);
+    }
+    on_success = function(res, status, xhr) {
+      var err;
+      err = xhr.status === 200 ? null : xhr.status;
+      return cb(err, res);
+    };
+    on_error = function(xhr, status, mesg) {
+      var code;
+      code = xhr.status;
+      return cb({
+        code: code,
+        status: status,
+        mesg: mesg
+      });
+    };
+    return $.ajax({
+      url: endpoint,
+      type: req_type,
+      contentType: "application/json",
+      data: data,
+      success: on_success,
+      error: on_error
+    });
+  };
+
+  $ajax.get = function(endpoint, data, cb) {
+    return $ajax(endpoint, data, 'get', cb);
+  };
+
+  $ajax.post = function(endpoint, data, cb) {
+    return $ajax(endpoint, data, 'post', cb);
+  };
+
+}).call(this);
+
+},{"assert":10}],3:[function(require,module,exports){
 (function() {
   var DEFAULT_FUNCTIONS, PRECEDENCE, TOKEN_REGEX, assert, evaluate, get_prefix, get_syntax_tree, get_syntax_tree_helper, tokenize, util;
 
@@ -472,7 +518,126 @@
 
 }).call(this);
 
-},{"assert":7,"util":11}],3:[function(require,module,exports){
+},{"assert":10,"util":14}],4:[function(require,module,exports){
+(function() {
+  var $ajax, ALL_TOOLS, ICONS, ToolContainer, ToolIcon,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+  $ajax = require('http_util.coffee').$ajax;
+
+  ALL_TOOLS = ['locator', 'ruler', 'radius_finder'];
+
+  ICONS = {
+    locator: require('toolbox/locator_icon.coffee'),
+    ruler: require('toolbox/ruler_icon.coffee'),
+    radius_finder: require('toolbox/radius_finder_icon.coffee')
+  };
+
+  ToolContainer = (function() {
+    function ToolContainer(player_info) {
+      var cell_h, cell_w, col, entries_per_row, highlighted, icon, icon_elt, owned, row, tool_info, tool_name, _i, _len, _ref, _ref1;
+      this.player_info = player_info;
+      this._elt = ($('<div></div>')).css({
+        width: 500,
+        height: 600,
+        position: 'absolute'
+      });
+      _ref = [60, 60], cell_w = _ref[0], cell_h = _ref[1];
+      _ref1 = [0, 0], row = _ref1[0], col = _ref1[1];
+      entries_per_row = 5;
+      for (_i = 0, _len = ALL_TOOLS.length; _i < _len; _i++) {
+        tool_name = ALL_TOOLS[_i];
+        tool_info = JS_DATA.ToolMap[tool_name];
+        owned = __indexOf.call(this.player_info.tools, tool_name) >= 0;
+        highlighted = owned || this.player_info.gold >= tool_info.price;
+        icon = new ToolIcon(tool_name, {
+          owned: owned,
+          highlighted: highlighted
+        });
+        icon_elt = icon.elt();
+        if (!owned && highlighted) {
+          (function(_this) {
+            return (function(tool_name) {
+              return icon_elt.click(function() {
+                return _this.buy(tool_name);
+              });
+            });
+          })(this)(tool_name);
+        }
+        icon_elt.css({
+          position: 'absolute',
+          top: row * cell_h + (cell_h - icon_elt.height()) / 2,
+          left: col * cell_w + (cell_w - icon_elt.width()) / 2
+        });
+        this._elt.append(icon.elt());
+        col += 1;
+        if (col >= entries_per_row) {
+          col = 0;
+          row += 1;
+        }
+      }
+    }
+
+    ToolContainer.prototype.buy = function(tool_name) {
+      return $ajax.post('/buy', {
+        tool_id: tool_name
+      }, (function(_this) {
+        return function(err, res) {
+          return console.log(err, res);
+        };
+      })(this));
+    };
+
+    ToolContainer.prototype.elt = function() {
+      return this._elt;
+    };
+
+    return ToolContainer;
+
+  })();
+
+  ToolIcon = (function() {
+    var DEFAULT_OPTS;
+
+    DEFAULT_OPTS = {
+      owned: false,
+      highlighted: false
+    };
+
+    function ToolIcon(tool_name, opts) {
+      var icon_svg, k, v, _base;
+      this.tool_name = tool_name;
+      this.opts = opts != null ? opts : {};
+      for (k in DEFAULT_OPTS) {
+        v = DEFAULT_OPTS[k];
+        if ((_base = this.opts)[k] == null) {
+          _base[k] = v;
+        }
+      }
+      icon_svg = this.opts.highlighted ? ICONS[this.tool_name].SELECTED_ICON : ICONS[this.tool_name].UNSELECTED_ICON;
+      this._elt = $('<div></div>');
+      if (!this.opts.owned && this.opts.highlighted) {
+        this._elt.css({
+          border: '1px solid rgb(86, 180, 239)',
+          'box-shadow': '0px 1px 3px rgba(0, 0, 0, 0.05) inset, 0px 0px 8px rgba(82, 168, 236, 0.6)'
+        });
+      }
+      this._elt.append(icon_svg);
+    }
+
+    ToolIcon.prototype.elt = function() {
+      return this._elt;
+    };
+
+    return ToolIcon;
+
+  })();
+
+  exports.ToolContainer = ToolContainer;
+
+}).call(this);
+
+},{"http_util.coffee":2,"toolbox/locator_icon.coffee":6,"toolbox/radius_finder_icon.coffee":7,"toolbox/ruler_icon.coffee":8}],5:[function(require,module,exports){
 (function() {
   var Path, Point, SVG, assert, k, to_radians, v,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
@@ -591,7 +756,7 @@
 
 }).call(this);
 
-},{"assert":7,"geometry.coffee":1,"paths-js/path":6}],4:[function(require,module,exports){
+},{"assert":10,"geometry.coffee":1,"paths-js/path":9}],6:[function(require,module,exports){
 (function() {
   var LOCATOR_SVG_PATHS, Path, SVG, border, cross, make_icon, ticks, _ref;
 
@@ -684,7 +849,88 @@
 
 }).call(this);
 
-},{"paths-js/path":6,"svg.coffee":3}],5:[function(require,module,exports){
+},{"paths-js/path":9,"svg.coffee":5}],7:[function(require,module,exports){
+(function() {
+  var Path, RF_SVG_PATHS, SVG, border, dotted_radius, make_icon, s, _ref;
+
+  SVG = require('svg.coffee');
+
+  Path = require('paths-js/path');
+
+  RF_SVG_PATHS = function() {
+    var border, dotted_radius, r, s;
+    r = 6;
+    s = 50;
+    border = Path().moveto(s - r, 0).arc(r, r, 0, 0, 1, s, r).lineto(s, s - r).arc(r, r, 0, 0, 1, s - r, s).lineto(r, s).arc(r, r, 0, 0, 1, 0, s - r).lineto(0, r).arc(r, r, 0, 0, 1, r, 0).closepath();
+    dotted_radius = Path().moveto(s / 2, s / 2).lineto(5 * s / 6, s / 2);
+    return {
+      border: border,
+      dotted_radius: dotted_radius
+    };
+  };
+
+  make_icon = function(svg) {
+    var ret, svg_container;
+    ret = $('<div></div>');
+    svg_container = SVG.root(52, 52);
+    svg_container.appendChild(svg);
+    ret.append(svg_container);
+    return ret;
+  };
+
+  _ref = RF_SVG_PATHS(), border = _ref.border, dotted_radius = _ref.dotted_radius;
+
+  s = 50;
+
+  exports.UNSELECTED_ICON = make_icon(SVG.g({
+    transform: "translate(1, 1)"
+  }, [
+    SVG.path({
+      d: border.print(),
+      fill: 'none',
+      stroke: 'gray',
+      'stroke-width': 2
+    }), SVG.circle({
+      cx: s / 2,
+      cy: s / 2,
+      r: s / 3,
+      fill: 'none',
+      stroke: 'gray',
+      'stroke-width': 2
+    }), SVG.path({
+      d: dotted_radius.print(),
+      stroke: 'gray',
+      'stroke-dasharray': '2,2',
+      'stroke-width': 2
+    })
+  ]));
+
+  exports.SELECTED_ICON = make_icon(SVG.g({
+    transform: "translate(1, 1)"
+  }, [
+    SVG.path({
+      d: border.print(),
+      fill: '#aaaaff',
+      stroke: 'black',
+      'stroke-width': 2
+    }), SVG.circle({
+      cx: s / 2,
+      cy: s / 2,
+      r: s / 3,
+      fill: '#28bda9',
+      stroke: 'black',
+      'stroke-width': 2
+    }), SVG.path({
+      d: dotted_radius.print(),
+      stroke: 'black',
+      'stroke-dasharray': '2,2',
+      'stroke-width': 2
+    })
+  ]));
+
+}).call(this);
+
+},{"paths-js/path":9,"svg.coffee":5}],8:[function(require,module,exports){
 (function() {
   var Path, RULER_SVG_PATHS, SVG, border, make_icon, ruler, ticks, _ref;
 
@@ -770,7 +1016,7 @@
 
 }).call(this);
 
-},{"paths-js/path":6,"svg.coffee":3}],6:[function(require,module,exports){
+},{"paths-js/path":9,"svg.coffee":5}],9:[function(require,module,exports){
 (function (global){
 // Generated by uRequire v{NO_VERSION} - template: 'nodejs' 
 (function (window, global) {
@@ -1044,7 +1290,7 @@ module.exports = (function () {
 
 }).call(this, (typeof exports === 'object' ? global : window), (typeof exports === 'object' ? global : window))
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -1406,7 +1652,7 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":11}],8:[function(require,module,exports){
+},{"util/":14}],11:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1431,7 +1677,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],9:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1496,14 +1742,14 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],10:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],11:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -2093,11 +2339,13 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":10,"_process":9,"inherits":8}],12:[function(require,module,exports){
+},{"./support/isBuffer":13,"_process":12,"inherits":11}],15:[function(require,module,exports){
 (function() {
-  var ICONS, LevelDisplay, LevelInfo, PlayerInfo, evaluate, get_syntax_tree, _ref;
+  var ICONS, LevelDisplay, LevelInfo, PlayerInfo, ToolContainer, evaluate, get_syntax_tree, _ref;
 
   _ref = require('input/eval.coffee'), evaluate = _ref.evaluate, get_syntax_tree = _ref.get_syntax_tree;
+
+  ToolContainer = require('shop/toolshop.coffee').ToolContainer;
 
   LevelInfo = (function() {
     function LevelInfo(_arg) {
@@ -2153,11 +2401,12 @@ function hasOwnProperty(obj, prop) {
 
   ICONS = {
     locator: require('toolbox/locator_icon.coffee'),
-    ruler: require('toolbox/ruler_icon.coffee')
+    ruler: require('toolbox/ruler_icon.coffee'),
+    radius_finder: require('toolbox/radius_finder_icon.coffee')
   };
 
   window.onload = function() {
-    var cell_h, cell_w, col, entries_per_row, icon, info, level_info, levels_container, name, player_info, row, tool, tool_container, _i, _j, _len, _len1, _ref1, _ref2, _ref3, _ref4, _ref5;
+    var info, level_info, levels_container, name, player_info, tool_container, _i, _len, _ref1, _ref2;
     ($(document.body)).find('.logged-in-name').text(JS_DATA.UserDisplayName);
     levels_container = ($(document.body)).find('.home-levels');
     _ref1 = JS_DATA.LevelData;
@@ -2176,34 +2425,11 @@ function hasOwnProperty(obj, prop) {
       tools: (_ref2 = JS_DATA.UserInfo.Tools) != null ? _ref2 : []
     });
     ($(document.body)).find('.gold-count').text("Gold: " + player_info.gold);
-    tool_container = ($('<div></div>')).css({
-      width: 500,
-      height: 600,
-      position: 'absolute'
-    });
-    _ref3 = [60, 60], cell_w = _ref3[0], cell_h = _ref3[1];
-    _ref4 = [0, 0], row = _ref4[0], col = _ref4[1];
-    entries_per_row = 5;
-    _ref5 = player_info.tools;
-    for (_j = 0, _len1 = _ref5.length; _j < _len1; _j++) {
-      tool = _ref5[_j];
-      icon = ICONS[tool].SELECTED_ICON;
-      icon.css({
-        position: 'absolute',
-        top: row * cell_h + (cell_h - icon.height()) / 2,
-        left: col * cell_w + (cell_w - icon.width()) / 2
-      });
-      tool_container.append(icon);
-      col += 1;
-      if (col >= entries_per_row) {
-        col = 0;
-        row += 1;
-      }
-    }
-    return ($(document.body)).find('.home-tools').append(tool_container);
+    tool_container = new ToolContainer(player_info);
+    return ($(document.body)).find('.home-tools').append(tool_container.elt());
   };
 
 }).call(this);
 
-},{"input/eval.coffee":2,"toolbox/locator_icon.coffee":4,"toolbox/ruler_icon.coffee":5}]},{},[12]);
+},{"input/eval.coffee":3,"shop/toolshop.coffee":4,"toolbox/locator_icon.coffee":6,"toolbox/radius_finder_icon.coffee":7,"toolbox/ruler_icon.coffee":8}]},{},[15]);
 

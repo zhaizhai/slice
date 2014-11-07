@@ -9,16 +9,21 @@ import (
 	"appengine/user"
 
 	"io/ioutil"
-//	"strconv"
 	"log"
 	"encoding/json"
-//	"strings"
 )
 
 import (
 	"model"
 )
 
+func surfaceError(w http.ResponseWriter, err error) bool {
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return true
+	}
+	return false
+}
 
 var APP_ID = "slice-game"
 var templates = template.Must(template.ParseFiles("home.html", "index.html"))
@@ -35,15 +40,13 @@ func init() {
 func initialize(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	err := model.InitializeLevelIDs(c, "server/levels.json")
-	if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+	if (surfaceError(w, err)) { return }
+
+	err = model.InitializeTools(c, "server/tools.json")
+	if (surfaceError(w, err)) { return }
+
 	_, err = w.Write([]byte("datastore initialized"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	if (surfaceError(w, err)) { return }
 }
 
 
@@ -95,6 +98,7 @@ type HomeTmplData struct {
 	UserDisplayName string
 	UserInfo model.UserInfo
 	LevelData []model.LevelCompleted
+	ToolMap map[string]model.ToolInfo
 }
 func root(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
@@ -103,42 +107,38 @@ func root(w http.ResponseWriter, r *http.Request) {
 		return // will return after login
 	}
 
+	toolMap, err := model.GetAllTools(c)
+	if (surfaceError(w, err)) { return }
+
 	info, err := getInfoForUser(c, u)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	if (surfaceError(w, err)) { return }
 
 	tmplData := &HomeTmplData{
 		UserDisplayName: u.String(),
 		UserInfo: *info,
 		LevelData: []model.LevelCompleted{},
+		ToolMap: *toolMap,
 	}
 	levels, err := model.ListLevelIDs(c)
 	for _, levelID := range levels {
 		lc, err := model.GetLevelCompleted(c, u, levelID)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		if (surfaceError(w, err)) { return }
 		tmplData.LevelData = append(tmplData.LevelData, *lc)
 	}
 
 	tmplJsonBytes, err := json.Marshal(tmplData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	if (surfaceError(w, err)) { return }
 	tmplJsonStr := string(tmplJsonBytes[:])
 
 	// TODO: why is there this two-step templating process?
 	err = templates.ExecuteTemplate(w, "home.html", HomeTmplArgs{JS_DATA: tmplJsonStr})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	if (surfaceError(w, err)) { return }
 }
 
+
+type BuyRequest struct {
+	ToolID string `json:"tool_id"`
+}
 func buy(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	u := user.Current(c)
@@ -147,28 +147,31 @@ func buy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+    body, err := ioutil.ReadAll(r.Body)
+	if (surfaceError(w, err)) { return }
+	req := &BuyRequest{}
+	err = json.Unmarshal(body, req)
+	if (surfaceError(w, err)) { return }
+
+	// TODO: maybe need a transaction here
+	tool, err := model.GetTool(c, req.ToolID)
+	if (surfaceError(w, err)) { return }
 	info, err := getInfoForUser(c, u)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if (surfaceError(w, err)) { return }
+
+	if info.Gold < tool.Price {
+		_, err = w.Write([]byte("insufficient funds"))
+		if (surfaceError(w, err)) { return }
 		return
 	}
 
 	k := datastore.NewKey(c, "UserInfo", info.UserID, 0, nil)
-	info.Gold -= 10
-	info.Tools = append(info.Tools, "locator")
-
-	log.Print("info now", info)
+	info.Gold -= tool.Price
+	info.Tools = append(info.Tools, req.ToolID)
 	_, err = datastore.Put(c, k, info)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
+	if (surfaceError(w, err)) { return }
 	_, err = w.Write([]byte("ok"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	if (surfaceError(w, err)) { return }
 }
 
 

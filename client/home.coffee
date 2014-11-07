@@ -1,4 +1,5 @@
 {evaluate, get_syntax_tree} = require 'input/eval.coffee'
+{ToolContainer} = require 'shop/toolshop.coffee'
 
 class LevelInfo
   constructor: ({
@@ -40,6 +41,7 @@ class LevelDisplay
 ICONS = {
   locator: (require 'toolbox/locator_icon.coffee')
   ruler: (require 'toolbox/ruler_icon.coffee')
+  radius_finder: (require 'toolbox/radius_finder_icon.coffee')
 }
 
 window.onload = ->
@@ -62,27 +64,6 @@ window.onload = ->
   }
   ($ document.body).find('.gold-count').text "Gold: #{player_info.gold}"
 
-  tool_container = ($ '<div></div>').css {
-    width: 500
-    height: 600
-    position: 'absolute'
-  }
-
-  [cell_w, cell_h] = [60, 60]
-  [row, col] = [0, 0]
-  entries_per_row = 5
-  for tool in player_info.tools
-    icon = ICONS[tool].SELECTED_ICON
-    icon.css {
-      position: 'absolute'
-      top: row * cell_h + (cell_h - icon.height()) / 2
-      left: col * cell_w + (cell_w - icon.width()) / 2
-    }
-    tool_container.append icon
-    col += 1
-    if col >= entries_per_row
-      col = 0
-      row += 1
-
-  ($ document.body).find('.home-tools').append tool_container
+  tool_container = new ToolContainer player_info
+  ($ document.body).find('.home-tools').append tool_container.elt()
 
