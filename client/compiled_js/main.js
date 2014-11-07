@@ -508,7 +508,7 @@
   exports.evaluate_string = function(s) {
     var ast, e;
     try {
-      ast = get_syntax_tree_helper(s);
+      ast = get_syntax_tree(s);
       return evaluate(ast, {}, {});
     } catch (_error) {
       e = _error;

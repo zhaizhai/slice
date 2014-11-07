@@ -139,6 +139,11 @@ func root(w http.ResponseWriter, r *http.Request) {
 type BuyRequest struct {
 	ToolID string `json:"tool_id"`
 }
+type BuyResponse struct {
+	Success bool `json:"success"`
+	Message string `json:"message"`
+	NewTools []string `json:"new_tools"`
+}
 func buy(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	u := user.Current(c)
@@ -159,8 +164,14 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	info, err := getInfoForUser(c, u)
 	if (surfaceError(w, err)) { return }
 
+	res := BuyResponse{}
+
 	if info.Gold < tool.Price {
-		_, err = w.Write([]byte("insufficient funds"))
+		res.Success = false
+		res.Message = "Insufficient funds"
+		resBytes, err := json.Marshal(res)
+		if (surfaceError(w, err)) { return }
+		_, err = w.Write(resBytes)
 		if (surfaceError(w, err)) { return }
 		return
 	}
@@ -170,7 +181,12 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	info.Tools = append(info.Tools, req.ToolID)
 	_, err = datastore.Put(c, k, info)
 	if (surfaceError(w, err)) { return }
-	_, err = w.Write([]byte("ok"))
+
+	res.Success = true
+	res.NewTools = info.Tools // TODO: copy?
+	resBytes, err := json.Marshal(res)
+	if (surfaceError(w, err)) { return }
+	_, err = w.Write(resBytes)
 	if (surfaceError(w, err)) { return }
 }
 

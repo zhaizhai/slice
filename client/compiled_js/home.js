@@ -508,7 +508,7 @@
   exports.evaluate_string = function(s) {
     var ast, e;
     try {
-      ast = get_syntax_tree_helper(s);
+      ast = get_syntax_tree(s);
       return evaluate(ast, {}, {});
     } catch (_error) {
       e = _error;
@@ -520,8 +520,12 @@
 
 },{"assert":10,"util":14}],4:[function(require,module,exports){
 (function() {
-  var $ajax, ALL_TOOLS, ICONS, ToolContainer, ToolIcon,
+  var $ajax, ALL_TOOLS, CHECKMARK_SVG, ICONS, Path, SVG, ToolContainer, ToolIcon,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+  SVG = require('svg.coffee');
+
+  Path = require('paths-js/path');
 
   $ajax = require('http_util.coffee').$ajax;
 
@@ -535,22 +539,28 @@
 
   ToolContainer = (function() {
     function ToolContainer(player_info) {
-      var cell_h, cell_w, col, entries_per_row, highlighted, icon, icon_elt, owned, row, tool_info, tool_name, _i, _len, _ref, _ref1;
       this.player_info = player_info;
       this._elt = ($('<div></div>')).css({
         width: 500,
         height: 600,
         position: 'absolute'
       });
+      this.refresh();
+    }
+
+    ToolContainer.prototype.refresh = function() {
+      var cell_h, cell_w, col, entries_per_row, highlighted, icon, icon_elt, owned, row, tool_info, tool_name, _i, _len, _ref, _ref1, _results;
+      this._elt.empty();
       _ref = [60, 60], cell_w = _ref[0], cell_h = _ref[1];
       _ref1 = [0, 0], row = _ref1[0], col = _ref1[1];
       entries_per_row = 5;
+      _results = [];
       for (_i = 0, _len = ALL_TOOLS.length; _i < _len; _i++) {
         tool_name = ALL_TOOLS[_i];
         tool_info = JS_DATA.ToolMap[tool_name];
         owned = __indexOf.call(this.player_info.tools, tool_name) >= 0;
         highlighted = owned || this.player_info.gold >= tool_info.price;
-        icon = new ToolIcon(tool_name, {
+        icon = new ToolIcon(tool_name, tool_info, {
           owned: owned,
           highlighted: highlighted
         });
@@ -573,17 +583,27 @@
         col += 1;
         if (col >= entries_per_row) {
           col = 0;
-          row += 1;
+          _results.push(row += 1);
+        } else {
+          _results.push(void 0);
         }
       }
-    }
+      return _results;
+    };
 
     ToolContainer.prototype.buy = function(tool_name) {
       return $ajax.post('/buy', {
         tool_id: tool_name
       }, (function(_this) {
         return function(err, res) {
-          return console.log(err, res);
+          var message, new_tools, success, _ref;
+          console.log(err, res);
+          _ref = JSON.parse(res), success = _ref.success, message = _ref.message, new_tools = _ref.new_tools;
+          if (!success) {
+            throw new Error(message);
+          }
+          _this.player_info.tools = new_tools;
+          return _this.refresh();
         };
       })(this));
     };
@@ -596,6 +616,17 @@
 
   })();
 
+  CHECKMARK_SVG = function(x, y, r) {
+    var path;
+    path = Path().moveto(-0.1, -0.15).qcurveto(-0.04, -0.08, 0, 0).qcurveto(0.20, -0.30, 0.5, -0.5).lineto(0.5, -0.47).qcurveto(0.2, -0.15, 0.0, 0.25).qcurveto(-0.1, 0.1, -0.25, -0.05).closepath();
+    return SVG.path({
+      d: path.print(),
+      fill: 'green',
+      'stroke-width': 2,
+      transform: "translate(" + x + ", " + y + ") scale(" + r + ", " + r + ")"
+    });
+  };
+
   ToolIcon = (function() {
     var DEFAULT_OPTS;
 
@@ -604,9 +635,10 @@
       highlighted: false
     };
 
-    function ToolIcon(tool_name, opts) {
-      var icon_svg, k, v, _base;
+    function ToolIcon(tool_name, tool_info, opts) {
+      var icon_svg, k, price_container, price_elt, root, v, _base;
       this.tool_name = tool_name;
+      this.tool_info = tool_info;
       this.opts = opts != null ? opts : {};
       for (k in DEFAULT_OPTS) {
         v = DEFAULT_OPTS[k];
@@ -617,12 +649,23 @@
       icon_svg = this.opts.highlighted ? ICONS[this.tool_name].SELECTED_ICON : ICONS[this.tool_name].UNSELECTED_ICON;
       this._elt = $('<div></div>');
       if (!this.opts.owned && this.opts.highlighted) {
-        this._elt.css({
+        icon_svg.css({
           border: '1px solid rgb(86, 180, 239)',
+          'border-radius': 8,
           'box-shadow': '0px 1px 3px rgba(0, 0, 0, 0.05) inset, 0px 0px 8px rgba(82, 168, 236, 0.6)'
         });
       }
       this._elt.append(icon_svg);
+      price_elt = this.opts.owned ? (root = SVG.root(20, 20), root.appendChild(CHECKMARK_SVG(8, 12, 20)), ($('<div></div>')).append(root)) : $("<div>" + this.tool_info.price + "</div>");
+      price_elt.addClass('disp-tc').css({
+        'text-align': 'center'
+      });
+      price_container = $('<div></div>').addClass('disp-t').css({
+        width: '100%',
+        'border-spacing': 0
+      });
+      price_container.append(price_elt);
+      this._elt.append(price_container);
     }
 
     ToolIcon.prototype.elt = function() {
@@ -637,7 +680,7 @@
 
 }).call(this);
 
-},{"http_util.coffee":2,"toolbox/locator_icon.coffee":6,"toolbox/radius_finder_icon.coffee":7,"toolbox/ruler_icon.coffee":8}],5:[function(require,module,exports){
+},{"http_util.coffee":2,"paths-js/path":9,"svg.coffee":5,"toolbox/locator_icon.coffee":6,"toolbox/radius_finder_icon.coffee":7,"toolbox/ruler_icon.coffee":8}],5:[function(require,module,exports){
 (function() {
   var Path, Point, SVG, assert, k, to_radians, v,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
