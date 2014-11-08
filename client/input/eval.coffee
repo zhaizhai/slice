@@ -1,8 +1,15 @@
 assert = require 'assert'
 util = require 'util'
 
-DEFAULT_FUNCTIONS = ['sin','cos','tan','sec','csc','cot', \
-                     'log','sqrt','ceil','floor']
+
+DEFAULT_FUNCTIONS = {}
+func_names = [
+  'sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'log',
+  'sqrt', 'ceil', 'floor', 'acos', 'asin', 'atan', 'abs'
+]
+for func in func_names
+  do (func) ->
+    DEFAULT_FUNCTIONS[func] = (x) -> Math[func](x)
 
 TOKEN_REGEX = {
   VARIABLE:    /^[a-zA-Z][a-zA-Z0-9]*/
@@ -94,7 +101,8 @@ get_syntax_tree_helper = (token_list) ->
   depth = 0
 
   # find the outermost operation for the root node.
-  # this is the lowest precedence operation (or rightmost if all precedences are equal)
+  # this is the lowest precedence operation (or rightmost if all precedences are
+  # equal)
   best_token_index = -1
   best_depth = -1
   for i in [0...token_list.length]
@@ -143,14 +151,14 @@ get_syntax_tree_helper = (token_list) ->
   assert false, "invalid"
 
 # assume function and variable namespace don't collide for now.
-evaluate = (syntax_tree, user_functions, user_variables) ->
+evaluate = (syntax_tree, functions, variables) ->
   switch syntax_tree.token_type
     when 'NUMBER' then return parseFloat(syntax_tree.token_name)
     when 'VARIABLE'
-      assert syntax_tree.token_name of user_variables
-      return user_variables[syntax_tree.token_name]
+      assert syntax_tree.token_name of variables
+      return variables[syntax_tree.token_name]
     when 'OPERATION'
-      evaluated_children = (evaluate(elt, user_functions, user_variables) for elt in syntax_tree.children)
+      evaluated_children = (evaluate(elt, functions, variables) for elt in syntax_tree.children)
       switch syntax_tree.token_name
         when '+' then return evaluated_children.reduce (t, s) -> t+s
         when '*' then return evaluated_children.reduce (t, s) -> t*s
@@ -165,16 +173,12 @@ evaluate = (syntax_tree, user_functions, user_variables) ->
           assert evaluated_children.length == 2
           return evaluated_children[0] - evaluated_children[1]
     when 'FUNCTION'
-      assert syntax_tree.token_name of user_functions
-      fn = user_functions[syntax_tree.token_name]
-      assert fn.inputs.length == syntax_tree.children.length
-
-      evaluated_children = (evaluate(elt, user_functions, user_variables) for elt in syntax_tree.children)
-      sub_tree = get_syntax_tree(fn.output_expression_str)
-      more_variables = user_variables
-      for i in [0...fn.inputs.length]
-        more_variables[fn.inputs[i]] = evaluated_children[i]
-      return evaluate(sub_tree, user_functions, more_variables)
+      assert syntax_tree.token_name of functions
+      evaluated_children = (evaluate(elt, functions, variables) for elt in syntax_tree.children)
+      fn = functions[syntax_tree.token_name]
+      # assert that there are the right number of inputs???
+      # assert fn.inputs.length == syntax_tree.children.length
+      return fn.apply(null, evaluated_children)
   assert false
 
 exports.tokenize = tokenize
@@ -185,7 +189,7 @@ exports.evaluate = evaluate
 exports.evaluate_string = (s) ->
   try
     ast = get_syntax_tree s
-    return evaluate ast, {}, {}
+    return evaluate ast, DEFAULT_FUNCTIONS, {}
   catch e
-    throw new Error "Syntax error in input: \"#{s}\""
+    throw new Error "Syntax error in input: \"#{s}\" "
 
