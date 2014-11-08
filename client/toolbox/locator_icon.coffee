@@ -44,13 +44,13 @@ make_icon = (svg) ->
 
 {border, cross, ticks} = LOCATOR_SVG_PATHS()
 
-exports.UNSELECTED_ICON = make_icon (SVG.g {transform: "translate(1, 1)"}, [
+exports.GRAY_ICON = make_icon (SVG.g {transform: "translate(1, 1)"}, [
     SVG.path {d: border.print(), fill: 'none', stroke: 'gray', 'stroke-width': 2}
     SVG.path {d: cross.print(), fill: 'none', stroke: 'gray', 'stroke-width': 3}
     SVG.path {d: ticks.print(), fill: 'none', stroke: 'gray', 'stroke-width': 2}
 ])
 
-exports.SELECTED_ICON = make_icon (SVG.g {transform: "translate(1, 1)"}, [
+exports.COLOR_ICON = make_icon (SVG.g {transform: "translate(1, 1)"}, [
     SVG.path {d: border.print(), fill: '#ffffaa', stroke: 'black', 'stroke-width': 2}
     SVG.path {d: cross.print(), fill: 'none', stroke: 'black', 'stroke-width': 3}
     SVG.path {d: ticks.print(), fill: 'none', stroke: 'black', 'stroke-width': 2}

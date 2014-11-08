@@ -4,7 +4,7 @@ Path = require 'paths-js/path'
 {HookBinding} = require 'levels/base.coffee'
 
 {ToolGraphics} = require 'toolbox/graphics.coffee'
-{SELECTED_ICON, UNSELECTED_ICON} = require 'toolbox/locator_icon.coffee'
+{COLOR_ICON, GRAY_ICON} = require 'toolbox/locator_icon.coffee'
 
 class Locator extends EventEmitter
   constructor: (@level, @level_data, @scene) ->
@@ -17,8 +17,8 @@ class Locator extends EventEmitter
     @_gfx = new ToolGraphics @level
 
   icons:
-    selected: SELECTED_ICON
-    unselected: UNSELECTED_ICON
+    selected: COLOR_ICON
+    unselected: GRAY_ICON
 
   activate: ->
     for pt_id in @level_data.points

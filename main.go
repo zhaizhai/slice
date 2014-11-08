@@ -79,7 +79,7 @@ func getInfoForUser(c appengine.Context, u *user.User) (*model.UserInfo, error) 
 		ret = &model.UserInfo{
 			UserID: u.ID,
 			Gold: 0,
-			Tools: []string{},
+			Tools: make([]string, 0),
 		}
 		_, err := datastore.Put(c, k, ret)
 		if err != nil {
@@ -268,6 +268,13 @@ func completeLevel(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+
+type LevelTmplArgs struct {
+	JS_DATA string
+}
+type LevelTmplData struct {
+	UserInfo model.UserInfo `json:"user_info"`
+}
 func level(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	u := requireLogin(c, w, r)
@@ -275,10 +282,19 @@ func level(w http.ResponseWriter, r *http.Request) {
 		return // will return after login
 	}
 
-	// TODO: why is there this two-step templating process?
-	err := templates.ExecuteTemplate(w, "index.html", nil /* no params */)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	info, err := getInfoForUser(c, u)
+	if (surfaceError(w, err)) { return }
+
+	tmplData := &LevelTmplData{
+		UserInfo: *info,
 	}
+	tmplJsonBytes, err := json.Marshal(tmplData)
+	if (surfaceError(w, err)) { return }
+	tmplJsonStr := string(tmplJsonBytes[:])
+
+	// TODO: why is there this two-step templating process?
+	err = templates.ExecuteTemplate(w, "index.html", LevelTmplArgs{
+		JS_DATA: tmplJsonStr,
+	})
+	if (surfaceError(w, err)) { return }
 }

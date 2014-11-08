@@ -5,7 +5,7 @@ Path = require 'paths-js/path'
 {Point} = require 'geometry.coffee'
 
 {ToolGraphics} = require 'toolbox/graphics.coffee'
-{SELECTED_ICON, UNSELECTED_ICON} = require 'toolbox/ruler_icon.coffee'
+{COLOR_ICON, GRAY_ICON} = require 'toolbox/ruler_icon.coffee'
 
 class Ruler extends EventEmitter
   constructor: (@level, @level_data, @scene) ->
@@ -41,8 +41,8 @@ class Ruler extends EventEmitter
     }
 
   icons:
-    selected: SELECTED_ICON
-    unselected: UNSELECTED_ICON
+    selected: COLOR_ICON
+    unselected: GRAY_ICON
 
   activate: ->
     for pt_id in @level_data.points

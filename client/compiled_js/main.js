@@ -266,13 +266,25 @@
 
 },{"assert":24}],3:[function(require,module,exports){
 (function() {
-  var DEFAULT_FUNCTIONS, PRECEDENCE, TOKEN_REGEX, assert, evaluate, get_prefix, get_syntax_tree, get_syntax_tree_helper, tokenize, util;
+  var DEFAULT_FUNCTIONS, PRECEDENCE, TOKEN_REGEX, assert, evaluate, func, func_names, get_prefix, get_syntax_tree, get_syntax_tree_helper, tokenize, util, _fn, _i, _len;
 
   assert = require('assert');
 
   util = require('util');
 
-  DEFAULT_FUNCTIONS = ['sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'log', 'sqrt', 'ceil', 'floor'];
+  DEFAULT_FUNCTIONS = {};
+
+  func_names = ['sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'log', 'sqrt', 'ceil', 'floor', 'acos', 'asin', 'atan', 'abs'];
+
+  _fn = function(func) {
+    return DEFAULT_FUNCTIONS[func] = function(x) {
+      return Math[func](x);
+    };
+  };
+  for (_i = 0, _len = func_names.length; _i < _len; _i++) {
+    func = func_names[_i];
+    _fn(func);
+  }
 
   TOKEN_REGEX = {
     VARIABLE: /^[a-zA-Z][a-zA-Z0-9]*/,
@@ -372,12 +384,12 @@
   };
 
   get_syntax_tree_helper = function(token_list) {
-    var best_depth, best_token, best_token_index, depth, function_args, i, left_token_list, right_token_list, t, _i, _ref, _ref1, _ref2, _ref3;
+    var best_depth, best_token, best_token_index, depth, function_args, i, left_token_list, right_token_list, t, _j, _ref, _ref1, _ref2, _ref3;
     assert(token_list.length > 0);
     depth = 0;
     best_token_index = -1;
     best_depth = -1;
-    for (i = _i = 0, _ref = token_list.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+    for (i = _j = 0, _ref = token_list.length; 0 <= _ref ? _j < _ref : _j > _ref; i = 0 <= _ref ? ++_j : --_j) {
       t = token_list[i];
       switch (t.token_type) {
         case 'OPEN_PAREN':
@@ -433,22 +445,22 @@
     return assert(false, "invalid");
   };
 
-  evaluate = function(syntax_tree, user_functions, user_variables) {
-    var elt, evaluated_children, fn, i, more_variables, sub_tree, _i, _ref;
+  evaluate = function(syntax_tree, functions, variables) {
+    var elt, evaluated_children, fn;
     switch (syntax_tree.token_type) {
       case 'NUMBER':
         return parseFloat(syntax_tree.token_name);
       case 'VARIABLE':
-        assert(syntax_tree.token_name in user_variables);
-        return user_variables[syntax_tree.token_name];
+        assert(syntax_tree.token_name in variables);
+        return variables[syntax_tree.token_name];
       case 'OPERATION':
         evaluated_children = (function() {
-          var _i, _len, _ref, _results;
+          var _j, _len1, _ref, _results;
           _ref = syntax_tree.children;
           _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            elt = _ref[_i];
-            _results.push(evaluate(elt, user_functions, user_variables));
+          for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+            elt = _ref[_j];
+            _results.push(evaluate(elt, functions, variables));
           }
           return _results;
         })();
@@ -474,25 +486,19 @@
         }
         break;
       case 'FUNCTION':
-        assert(syntax_tree.token_name in user_functions);
-        fn = user_functions[syntax_tree.token_name];
-        assert(fn.inputs.length === syntax_tree.children.length);
+        assert(syntax_tree.token_name in functions);
         evaluated_children = (function() {
-          var _i, _len, _ref, _results;
+          var _j, _len1, _ref, _results;
           _ref = syntax_tree.children;
           _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            elt = _ref[_i];
-            _results.push(evaluate(elt, user_functions, user_variables));
+          for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+            elt = _ref[_j];
+            _results.push(evaluate(elt, functions, variables));
           }
           return _results;
         })();
-        sub_tree = get_syntax_tree(fn.output_expression_str);
-        more_variables = user_variables;
-        for (i = _i = 0, _ref = fn.inputs.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-          more_variables[fn.inputs[i]] = evaluated_children[i];
-        }
-        return evaluate(sub_tree, user_functions, more_variables);
+        fn = functions[syntax_tree.token_name];
+        return fn.apply(null, evaluated_children);
     }
     return assert(false);
   };
@@ -509,10 +515,10 @@
     var ast, e;
     try {
       ast = get_syntax_tree(s);
-      return evaluate(ast, {}, {});
+      return evaluate(ast, DEFAULT_FUNCTIONS, {});
     } catch (_error) {
       e = _error;
-      throw new Error("Syntax error in input: \"" + s + "\"");
+      throw new Error("Syntax error in input: \"" + s + "\" ");
     }
   };
 
@@ -1746,7 +1752,7 @@
 
 },{"svg.coffee":13}],15:[function(require,module,exports){
 (function() {
-  var EventEmitter, HookBinding, Locator, Path, SELECTED_ICON, SVG, ToolGraphics, UNSELECTED_ICON, _ref,
+  var COLOR_ICON, EventEmitter, GRAY_ICON, HookBinding, Locator, Path, SVG, ToolGraphics, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -1760,7 +1766,7 @@
 
   ToolGraphics = require('toolbox/graphics.coffee').ToolGraphics;
 
-  _ref = require('toolbox/locator_icon.coffee'), SELECTED_ICON = _ref.SELECTED_ICON, UNSELECTED_ICON = _ref.UNSELECTED_ICON;
+  _ref = require('toolbox/locator_icon.coffee'), COLOR_ICON = _ref.COLOR_ICON, GRAY_ICON = _ref.GRAY_ICON;
 
   Locator = (function(_super) {
     __extends(Locator, _super);
@@ -1788,8 +1794,8 @@
     }
 
     Locator.prototype.icons = {
-      selected: SELECTED_ICON,
-      unselected: UNSELECTED_ICON
+      selected: COLOR_ICON,
+      unselected: GRAY_ICON
     };
 
     Locator.prototype.activate = function() {
@@ -1940,7 +1946,7 @@
 
   _ref = LOCATOR_SVG_PATHS(), border = _ref.border, cross = _ref.cross, ticks = _ref.ticks;
 
-  exports.UNSELECTED_ICON = make_icon(SVG.g({
+  exports.GRAY_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -1961,7 +1967,7 @@
     })
   ]));
 
-  exports.SELECTED_ICON = make_icon(SVG.g({
+  exports.COLOR_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -1986,7 +1992,7 @@
 
 },{"paths-js/path":23,"svg.coffee":13}],17:[function(require,module,exports){
 (function() {
-  var EventEmitter, HookBinding, Path, RadiusFinder, SELECTED_ICON, SVG, ToolGraphics, UNSELECTED_ICON, _ref,
+  var COLOR_ICON, EventEmitter, GRAY_ICON, HookBinding, Path, RadiusFinder, SVG, ToolGraphics, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -2000,7 +2006,7 @@
 
   ToolGraphics = require('toolbox/graphics.coffee').ToolGraphics;
 
-  _ref = require('toolbox/radius_finder_icon.coffee'), SELECTED_ICON = _ref.SELECTED_ICON, UNSELECTED_ICON = _ref.UNSELECTED_ICON;
+  _ref = require('toolbox/radius_finder_icon.coffee'), COLOR_ICON = _ref.COLOR_ICON, GRAY_ICON = _ref.GRAY_ICON;
 
   RadiusFinder = (function(_super) {
     __extends(RadiusFinder, _super);
@@ -2023,8 +2029,8 @@
     }
 
     RadiusFinder.prototype.icons = {
-      selected: SELECTED_ICON,
-      unselected: UNSELECTED_ICON
+      selected: COLOR_ICON,
+      unselected: GRAY_ICON
     };
 
     RadiusFinder.prototype.activate = function() {
@@ -2155,7 +2161,7 @@
 
   s = 50;
 
-  exports.UNSELECTED_ICON = make_icon(SVG.g({
+  exports.GRAY_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -2178,7 +2184,7 @@
     })
   ]));
 
-  exports.SELECTED_ICON = make_icon(SVG.g({
+  exports.COLOR_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -2205,7 +2211,7 @@
 
 },{"paths-js/path":23,"svg.coffee":13}],19:[function(require,module,exports){
 (function() {
-  var EventEmitter, HookBinding, Path, Point, Ruler, SELECTED_ICON, SVG, ToolGraphics, UNSELECTED_ICON, _ref,
+  var COLOR_ICON, EventEmitter, GRAY_ICON, HookBinding, Path, Point, Ruler, SVG, ToolGraphics, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -2221,7 +2227,7 @@
 
   ToolGraphics = require('toolbox/graphics.coffee').ToolGraphics;
 
-  _ref = require('toolbox/ruler_icon.coffee'), SELECTED_ICON = _ref.SELECTED_ICON, UNSELECTED_ICON = _ref.UNSELECTED_ICON;
+  _ref = require('toolbox/ruler_icon.coffee'), COLOR_ICON = _ref.COLOR_ICON, GRAY_ICON = _ref.GRAY_ICON;
 
   Ruler = (function(_super) {
     __extends(Ruler, _super);
@@ -2266,8 +2272,8 @@
     };
 
     Ruler.prototype.icons = {
-      selected: SELECTED_ICON,
-      unselected: UNSELECTED_ICON
+      selected: COLOR_ICON,
+      unselected: GRAY_ICON
     };
 
     Ruler.prototype.activate = function() {
@@ -2424,7 +2430,7 @@
 
   _ref = RULER_SVG_PATHS(), border = _ref.border, ruler = _ref.ruler, ticks = _ref.ticks;
 
-  exports.UNSELECTED_ICON = make_icon(SVG.g({
+  exports.GRAY_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -2445,7 +2451,7 @@
     })
   ]));
 
-  exports.SELECTED_ICON = make_icon(SVG.g({
+  exports.COLOR_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -2470,7 +2476,8 @@
 
 },{"paths-js/path":23,"svg.coffee":13}],21:[function(require,module,exports){
 (function() {
-  var EventEmitter, Locator, RadiusFinder, Ruler, SVG, ToolBox;
+  var EventEmitter, Locator, RadiusFinder, Ruler, SVG, ToolBox,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   SVG = require('svg.coffee');
 
@@ -2482,10 +2489,13 @@
     TMPL = '<div>\n  <div class="toolbox-section tool-selection-area">\n    <div class="tool-title">Tools</div>\n    <div class="tool-selection"></div>\n  </div>\n  <div class="toolbox-section tool-measurement-area">\n    <div class="tool-action-points"></div>\n    <div class="tool-status"></div>\n    <div class="tool-notebook"></div>\n  </div>\n</div>';
 
     function ToolBox(_arg) {
-      var default_tool, name, sel_elt, tool, _fn, _ref;
-      this.level = _arg.level, this.scene = _arg.scene, this.tools = _arg.tools, default_tool = _arg.default_tool;
+      var available, default_tool, name, sel_elt, tool, _fn, _ref;
+      this.level = _arg.level, this.scene = _arg.scene, this.tools = _arg.tools, this.disabled_tools = _arg.disabled_tools, default_tool = _arg.default_tool;
       if (default_tool == null) {
         default_tool = null;
+      }
+      if (this.disabled_tools == null) {
+        this.disabled_tools = [];
       }
       this.ap_used = 0;
       this._elt = $(TMPL);
@@ -2496,17 +2506,23 @@
       _fn = (function(_this) {
         return function(name, tool) {
           var container, icon;
-          icon = tool.icons.unselected;
+          icon = available ? tool.icons.selected : tool.icons.unselected;
           container = ($('<div></div>')).addClass('tool-icon').append(icon);
-          container.click(function() {
-            return _this.select(name);
-          });
           _this._icon_elts[name] = container;
+          container.css({
+            opacity: 0.5
+          });
+          if (available) {
+            container.click(function() {
+              return _this.select(name);
+            });
+          }
           return sel_elt.append(container);
         };
       })(this);
       for (name in _ref) {
         tool = _ref[name];
+        available = (__indexOf.call(this.disabled_tools, name) < 0);
         _fn(name, tool);
       }
       this._measurements = [];
@@ -2543,8 +2559,9 @@
     ToolBox.prototype._deactivate = function(name) {
       var tool;
       tool = this.tools[name];
-      this._icon_elts[name].empty();
-      this._icon_elts[name].append(tool.icons.unselected);
+      this._icon_elts[name].css({
+        opacity: 0.5
+      });
       this.level.clear_render_hooks();
       this.scene.mousemove(null);
       this.scene.set_overlay(null);
@@ -2559,8 +2576,9 @@
       var tool;
       console.log('activating', name);
       tool = this.tools[name];
-      this._icon_elts[name].empty();
-      this._icon_elts[name].append(tool.icons.selected);
+      this._icon_elts[name].css({
+        opacity: 1.0
+      });
       tool.activate();
       this._on_tool_change = (function(_this) {
         return function() {
@@ -2613,19 +2631,23 @@
 
   RadiusFinder = require('toolbox/radius_finder.coffee').RadiusFinder;
 
-  exports.setup_tools = function(level, scene) {
-    var TOOLS, name, tool, tool_data, tool_type, tools;
+  exports.setup_tools = function(scene, level, player_tools) {
+    var TOOLS, disabled_tools, name, tool, tool_data, tool_type, tools;
     TOOLS = {
       locator: Locator,
       ruler: Ruler,
       radius_finder: RadiusFinder
     };
     tools = {};
+    disabled_tools = [];
     for (name in TOOLS) {
       tool_type = TOOLS[name];
       tool_data = level.allowed_tools[name];
       if (tool_data == null) {
         continue;
+      }
+      if (__indexOf.call(player_tools, name) < 0) {
+        disabled_tools.push(name);
       }
       tool = new tool_type(level, tool_data, scene);
       tools[name] = tool;
@@ -2639,7 +2661,8 @@
       toolbox: new ToolBox({
         level: level,
         tools: tools,
-        scene: scene
+        scene: scene,
+        disabled_tools: disabled_tools
       })
     };
   };
@@ -4962,7 +4985,7 @@ function hasOwnProperty(obj, prop) {
   };
 
   window.onload = function() {
-    var RIGHT_GREEN, SCORE_TO_MESG, WRONG_RED, level, level_id, scene, sm, tb, title;
+    var RIGHT_GREEN, SCORE_TO_MESG, WRONG_RED, level, level_id, scene, sm, tb, title, tools;
     level_id = window.location.hash.slice(1);
     level = LevelLoader.load(level_id);
     if (level == null) {
@@ -4971,7 +4994,8 @@ function hasOwnProperty(obj, prop) {
     }
     window.level = level;
     scene = new Scene(level);
-    tb = (setup_tools(level, scene)).toolbox;
+    tools = JS_DATA.user_info.Tools;
+    tb = (setup_tools(scene, level, tools)).toolbox;
     ($('.right-panel')).append(tb.elt());
     scene.render();
     ($('.left-panel'))[0].appendChild(scene.svg_elt());

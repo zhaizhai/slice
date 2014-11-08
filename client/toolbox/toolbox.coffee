@@ -16,10 +16,11 @@ class ToolBox
   </div>
   '''
   constructor: ({
-    @level, @scene, @tools,
+    @level, @scene, @tools, @disabled_tools,
     default_tool
   }) ->
     default_tool ?= null
+    @disabled_tools ?= [] # TODO
     @ap_used = 0
 
     @_elt = $ TMPL
@@ -28,13 +29,18 @@ class ToolBox
 
     sel_elt = (@_elt.find '.tool-selection')
     for name, tool of @tools
+      available = (name not in @disabled_tools)
       do (name, tool) =>
-        icon = tool.icons.unselected
+        icon = if available then tool.icons.selected else tool.icons.unselected
         container = ($ '<div></div>')
           .addClass('tool-icon').append icon
-        container.click =>
-          @select name
         @_icon_elts[name] = container
+
+        container.css {opacity: 0.5}
+        if available
+          container.click =>
+            @select name
+
         sel_elt.append container
 
     @_measurements = []
@@ -66,8 +72,7 @@ class ToolBox
 
   _deactivate: (name) ->
     tool = @tools[name]
-    @_icon_elts[name].empty()
-    @_icon_elts[name].append tool.icons.unselected
+    @_icon_elts[name].css {opacity: 0.5}
 
     @level.clear_render_hooks()
     @scene.mousemove null
@@ -81,8 +86,7 @@ class ToolBox
     console.log 'activating', name
 
     tool = @tools[name]
-    @_icon_elts[name].empty()
-    @_icon_elts[name].append tool.icons.selected
+    @_icon_elts[name].css {opacity: 1.0}
     tool.activate()
 
     @_on_tool_change = =>
@@ -125,16 +129,20 @@ class ToolBox
 {Ruler} = require 'toolbox/ruler.coffee'
 {RadiusFinder} = require 'toolbox/radius_finder.coffee'
 
-exports.setup_tools = (level, scene) ->
+exports.setup_tools = (scene, level, player_tools) ->
   TOOLS =
     locator: Locator
     ruler: Ruler
     radius_finder: RadiusFinder
 
   tools = {}
+  disabled_tools = []
   for name, tool_type of TOOLS
     tool_data = level.allowed_tools[name]
     if not tool_data? then continue
+
+    if name not in player_tools
+      disabled_tools.push name
 
     tool = new tool_type level, tool_data, scene
     tools[name] = tool
@@ -149,6 +157,7 @@ exports.setup_tools = (level, scene) ->
       level: level
       tools: tools
       scene: scene
+      disabled_tools: disabled_tools
       # default_tool: 'locator'
     }
   }

@@ -87,7 +87,8 @@ window.onload = ->
   window.level = level
   scene = new Scene level
 
-  tb = (setup_tools level, scene).toolbox
+  tools = JS_DATA.user_info.Tools
+  tb = (setup_tools scene, level, tools).toolbox
   ($ '.right-panel').append tb.elt()
 
   scene.render()

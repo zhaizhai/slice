@@ -22,14 +22,14 @@ make_icon = (svg) ->
 {border, dotted_radius} = RF_SVG_PATHS()
 
 s = 50 # TODO
-exports.UNSELECTED_ICON = make_icon (SVG.g {transform: "translate(1, 1)"}, [
+exports.GRAY_ICON = make_icon (SVG.g {transform: "translate(1, 1)"}, [
   SVG.path {d: border.print(), fill: 'none', stroke: 'gray', 'stroke-width': 2}
   SVG.circle {cx: (s/2), cy: (s/2), r: (s/3), fill: 'none', stroke: 'gray', 'stroke-width': 2}
   SVG.path {d: dotted_radius.print(), stroke: 'gray', 'stroke-dasharray': '2,2', 'stroke-width': 2}
 ])
 
 # TODO: less ugly colors
-exports.SELECTED_ICON = make_icon (SVG.g {transform: "translate(1, 1)"}, [
+exports.COLOR_ICON = make_icon (SVG.g {transform: "translate(1, 1)"}, [
   SVG.path {d: border.print(), fill: '#aaaaff', stroke: 'black', 'stroke-width': 2}
   SVG.circle {cx: (s/2), cy: (s/2), r: (s/3), fill: '#28bda9', stroke: 'black', 'stroke-width': 2}
   SVG.path {d: dotted_radius.print(), stroke: 'black', 'stroke-dasharray': '2,2', 'stroke-width': 2}

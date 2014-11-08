@@ -588,7 +588,7 @@
           _base[k] = v;
         }
       }
-      icon_svg = this.opts.highlighted ? ICONS[this.tool_name].SELECTED_ICON : ICONS[this.tool_name].UNSELECTED_ICON;
+      icon_svg = this.opts.highlighted ? ICONS[this.tool_name].COLOR_ICON : ICONS[this.tool_name].GRAY_ICON;
       this._elt = ($('<div></div>')).css({
         padding: 4,
         'border-radius': 6
@@ -793,7 +793,7 @@
 
   _ref = LOCATOR_SVG_PATHS(), border = _ref.border, cross = _ref.cross, ticks = _ref.ticks;
 
-  exports.UNSELECTED_ICON = make_icon(SVG.g({
+  exports.GRAY_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -814,7 +814,7 @@
     })
   ]));
 
-  exports.SELECTED_ICON = make_icon(SVG.g({
+  exports.COLOR_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -870,7 +870,7 @@
 
   s = 50;
 
-  exports.UNSELECTED_ICON = make_icon(SVG.g({
+  exports.GRAY_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -893,7 +893,7 @@
     })
   ]));
 
-  exports.SELECTED_ICON = make_icon(SVG.g({
+  exports.COLOR_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -960,7 +960,7 @@
 
   _ref = RULER_SVG_PATHS(), border = _ref.border, ruler = _ref.ruler, ticks = _ref.ticks;
 
-  exports.UNSELECTED_ICON = make_icon(SVG.g({
+  exports.GRAY_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({
@@ -981,7 +981,7 @@
     })
   ]));
 
-  exports.SELECTED_ICON = make_icon(SVG.g({
+  exports.COLOR_ICON = make_icon(SVG.g({
     transform: "translate(1, 1)"
   }, [
     SVG.path({

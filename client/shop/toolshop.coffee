@@ -157,9 +157,9 @@ class ToolIcon
       @opts[k] ?= v
 
     icon_svg = if @opts.highlighted
-      ICONS[@tool_name].SELECTED_ICON
+      ICONS[@tool_name].COLOR_ICON
     else
-      ICONS[@tool_name].UNSELECTED_ICON
+      ICONS[@tool_name].GRAY_ICON
 
     # icon_svg.find('svg')[0].appendChild (CHECKMARK_SVG 35, 40, 40)
 
