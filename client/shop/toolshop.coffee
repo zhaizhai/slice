@@ -1,6 +1,11 @@
+mustache = require 'mustache'
 SVG = require 'svg.coffee'
 Path = require 'paths-js/path'
 {$ajax} = require 'http_util.coffee'
+
+render_to_jq = (tmpl, params) ->
+  html = mustache.to_html tmpl, params
+  return $ html
 
 ALL_TOOLS = ['locator', 'ruler', 'radius_finder']
 ICONS = {
@@ -11,58 +16,120 @@ ICONS = {
 
 
 class ToolContainer
+  TMPL = '''
+  <div class="disp-t">
+    <div class="disp-tc tool-grid"></div>
+    <div class="disp-tc tool-description"></div>
+  </div>
+  '''
+  TOOL_DESC = '''
+  <div class="tool-name">{{name}}</div>
+  <div class="tool-text">{{desc}}</div>
+  '''
+
+  [CELL_W, CELL_H] = [60, 80]
+  ENTRIES_PER_ROW = 4
+
   constructor: (@player_info) ->
-    @_elt = ($ '<div></div>').css {
-      width: 500
+    @_selection = null
+    @_elt = $ TMPL
+
+    @_tool_desc = (@_elt.find '.tool-description').css {
+      width: 250
+    }
+    @_tool_container = ($ '<div></div>').css {
+      width: ENTRIES_PER_ROW * CELL_W
       height: 600
       position: 'absolute'
     }
+    @_elt.find('.tool-grid').css({
+      width: @_tool_container.width()
+      'min-width': @_tool_container.width()
+    }).append @_tool_container
+
     @refresh()
 
-  refresh: ->
-    @_elt.empty()
+  elt: -> @_elt
 
-    [cell_w, cell_h] = [60, 60]
+  select: (tool_name) ->
+    if tool_name is @_selection
+      @_selection = null
+    else
+      @_selection = tool_name
+
+  _set_description: (tool_name, tool_info) ->
+    @_tool_desc.empty()
+
+    desc = render_to_jq TOOL_DESC, {
+      name: tool_info.name
+      desc: tool_info.description
+    }
+    @_tool_desc.append desc
+
+    if tool_name in @player_info.tools
+      return
+
+    buy_button = ($ '<button>Buy</button>').click =>
+      @_buy tool_name
+    @_tool_desc.append buy_button
+    if not (@_can_buy tool_name)
+      buy_button.prop 'disabled', true
+
+  _can_buy: (tool_name) ->
+    tool_info = JS_DATA.ToolMap[tool_name]
+    owned = tool_name in @player_info.tools
+    return (not owned and @player_info.gold >= tool_info.price)
+
+  _buy: (tool_name) ->
+    $ajax.post '/buy', {
+      tool_id: tool_name
+    }, (err, res) =>
+      console.log err, res
+      {success, message, new_user_info} = JSON.parse res
+      if not success
+        throw new Error message
+
+      # TODO: temporary hacks
+      @player_info.tools = new_user_info.Tools
+      @player_info.gold = new_user_info.Gold
+      ($ document.body).find('.gold-count').text "Gold: #{@player_info.gold}"
+
+      @refresh()
+
+  refresh: ->
+    @_tool_container.empty()
+    @_tool_desc.empty()
+
     [row, col] = [0, 0]
-    entries_per_row = 5
     for tool_name in ALL_TOOLS
       tool_info = JS_DATA.ToolMap[tool_name]
-
       owned = tool_name in @player_info.tools
       highlighted = (owned or @player_info.gold >= tool_info.price)
       icon = new ToolIcon tool_name, tool_info, {owned, highlighted}
       icon_elt = icon.elt()
 
-      if not owned and highlighted
-        do (tool_name) =>
-          icon_elt.click =>
-            @buy tool_name
-
+      @_tool_container.append icon_elt
+      # if not owned and highlighted
+      do (tool_name) =>
+        icon_elt.click =>
+          @select tool_name
+          @refresh()
+      # TODO: for some reason icon_elt.width() and .height() return 0
+      # at this stage
       icon_elt.css {
         position: 'absolute'
-        top: row * cell_h + (cell_h - icon_elt.height()) / 2
-        left: col * cell_w + (cell_w - icon_elt.width()) / 2
+        top: row * CELL_H #+ (CELL_H - icon_elt.height()) / 2
+        left: col * CELL_W #+ (CELL_W - icon_elt.width()) / 2
       }
-      @_elt.append icon.elt()
+
+      if tool_name is @_selection
+        @_set_description tool_name, tool_info
+        icon_elt.css {'background-color': '#bbbbbb'}
+
       col += 1
-      if col >= entries_per_row
+      if col >= ENTRIES_PER_ROW
         col = 0
         row += 1
-
-  buy: (tool_name) ->
-    $ajax.post '/buy', {
-      tool_id: tool_name
-    }, (err, res) =>
-      console.log err, res
-      {success, message, new_tools} = JSON.parse res
-      if not success
-        throw new Error message
-
-      # TODO: temporary hack
-      @player_info.tools = new_tools
-      @refresh()
-
-  elt: -> @_elt
 
 
 CHECKMARK_SVG = (x, y, r) ->
@@ -96,8 +163,12 @@ class ToolIcon
 
     # icon_svg.find('svg')[0].appendChild (CHECKMARK_SVG 35, 40, 40)
 
-    @_elt = $ '<div></div>'
-    if not @opts.owned and @opts.highlighted
+    @_elt = ($ '<div></div>').css {
+      padding: 4
+      'border-radius': 6
+    }
+    if @opts.highlighted and not @opts.owned
+      # TODO: this globally alters the icon css...
       icon_svg.css {
         border: '1px solid rgb(86, 180, 239)'
         'border-radius': 8

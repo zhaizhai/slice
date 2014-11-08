@@ -15,6 +15,6 @@
         "name": "Radius Finder",
         "price": 500,
         "energy_cost": 30,
-        "description": "The radius finder's name is self-explanatory: it finds the radius of a circle."
+        "description": "This tool is self-explanatory: it finds the radius of a circle."
     }
 }

@@ -142,7 +142,7 @@ type BuyRequest struct {
 type BuyResponse struct {
 	Success bool `json:"success"`
 	Message string `json:"message"`
-	NewTools []string `json:"new_tools"`
+	NewUserInfo model.UserInfo `json:"new_user_info"`
 }
 func buy(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
@@ -183,7 +183,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	if (surfaceError(w, err)) { return }
 
 	res.Success = true
-	res.NewTools = info.Tools // TODO: copy?
+	res.NewUserInfo = *info // TODO: do we want to return all this?
 	resBytes, err := json.Marshal(res)
 	if (surfaceError(w, err)) { return }
 	_, err = w.Write(resBytes)
