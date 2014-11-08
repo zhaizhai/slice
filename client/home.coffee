@@ -1,5 +1,5 @@
-{evaluate, get_syntax_tree} = require 'input/eval.coffee'
 {ToolContainer} = require 'shop/toolshop.coffee'
+{LevelContainer} = require 'level_container.coffee'
 
 class LevelInfo
   constructor: ({
@@ -12,32 +12,6 @@ class PlayerInfo
     @tools, @gold
   }) ->
 
-
-class LevelDisplay
-  TMPL = '''
-  <div class="level-row">
-    <div class="disp-tc level-name"></div>
-    <div class="disp-tc level-progress"></div>
-  </div>
-  '''
-
-  constructor: (@level_info) ->
-    @_elt = $ TMPL
-    (@_elt.find 'div.level-name').text @level_info.name
-
-    progress_txt = ""
-    for i in [0...3]
-      if @level_info.stars > i
-        progress_txt += "\u2605"
-      else
-        progress_txt += "\u2606"
-    (@_elt.find 'div.level-progress').text progress_txt
-
-    @_elt.click =>
-      window.location.href = "level\##{@level_info.level_id}"
-
-  elt: -> @_elt
-
 ICONS = {
   locator: (require 'toolbox/locator_icon.coffee')
   ruler: (require 'toolbox/ruler_icon.coffee')
@@ -47,16 +21,18 @@ ICONS = {
 window.onload = ->
   ($ document.body).find('.logged-in-name').text JS_DATA.UserDisplayName
 
-  levels_container = ($ document.body).find '.home-levels'
+  levels = []
   for info in JS_DATA.LevelData
     name = "Level " + info.LevelID.slice(1) # TODO
-
     level_info = new LevelInfo {
       level_id: info.LevelID
       name: name # TODO
       stars: info.Stars
     }
-    levels_container.append (new LevelDisplay level_info).elt()
+    levels.push level_info
+
+  levels_container = new LevelContainer levels
+  ($ document.body).find('.home-levels').append levels_container.elt()
 
   player_info = new PlayerInfo {
     gold: JS_DATA.UserInfo.Gold

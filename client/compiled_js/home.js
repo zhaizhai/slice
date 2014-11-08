@@ -266,259 +266,130 @@
 
 },{"assert":11}],3:[function(require,module,exports){
 (function() {
-  var DEFAULT_FUNCTIONS, PRECEDENCE, TOKEN_REGEX, assert, evaluate, get_prefix, get_syntax_tree, get_syntax_tree_helper, tokenize, util;
+  var LevelContainer, LevelDisplay;
 
-  assert = require('assert');
+  LevelDisplay = (function() {
+    var TMPL;
 
-  util = require('util');
+    TMPL = '<div class="level-row">\n  <div class="disp-tc level-name"></div>\n  <div class="disp-tc level-progress"></div>\n</div>';
 
-  DEFAULT_FUNCTIONS = ['sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'log', 'sqrt', 'ceil', 'floor'];
-
-  TOKEN_REGEX = {
-    VARIABLE: /^[a-zA-Z][a-zA-Z0-9]*/,
-    FUNCTION: /^[a-zA-Z][a-zA-Z0-9]*\(/,
-    NUMBER: /^[-+]?[0-9]*\.?[0-9]+/,
-    OPERATION: /^[\^*/+-]/,
-    OPEN_PAREN: /^\(/,
-    CLOSE_PAREN: /^\)/,
-    COMMA: /^,/
-  };
-
-  PRECEDENCE = {
-    '^': 3,
-    '*': 2,
-    '/': 2,
-    '+': 1,
-    '-': 1
-  };
-
-  get_prefix = function(expression_str, token_type) {
-    var match, prefix;
-    if (!(match = TOKEN_REGEX[token_type].exec(expression_str))) {
-      return "";
+    function LevelDisplay(level_info, show_detail) {
+      var attempt_button, i, progress_txt, _i;
+      this.level_info = level_info;
+      this.show_detail = show_detail != null ? show_detail : false;
+      this._elt = $(TMPL);
+      (this._elt.find('div.level-name')).text(this.level_info.name);
+      progress_txt = "";
+      for (i = _i = 0; _i < 3; i = ++_i) {
+        if (this.level_info.stars > i) {
+          progress_txt += "\u2605";
+        } else {
+          progress_txt += "\u2606";
+        }
+      }
+      if (this.show_detail) {
+        attempt_button = ($('<button>Attempt</button>')).click((function(_this) {
+          return function() {
+            return window.location.href = "level\#" + _this.level_info.level_id;
+          };
+        })(this));
+        (this._elt.find('div.level-progress')).append(attempt_button);
+        this._elt.css({
+          'background-color': '#cccccc'
+        });
+      } else {
+        (this._elt.find('div.level-progress')).text(progress_txt);
+      }
+      this._elt.hover(((function(_this) {
+        return function() {
+          return _this._hover_in();
+        };
+      })(this)), ((function(_this) {
+        return function() {
+          return _this._hover_out();
+        };
+      })(this)));
     }
-    prefix = match[0];
-    return prefix;
-  };
 
-  tokenize = function(expression_str) {
-    var c, function_prefix, ix, k, number_prefix, substr, token_list, token_type_matched, v, variable_prefix, _ref;
-    token_list = [];
-    ix = 0;
-    while (ix < expression_str.length) {
-      substr = expression_str.slice(ix, expression_str.length);
-      c = expression_str[ix];
-      if (c === ' ') {
-        ix += 1;
-        continue;
+    LevelDisplay.prototype.elt = function() {
+      return this._elt;
+    };
+
+    LevelDisplay.prototype._hover_in = function() {
+      if (this.show_detail) {
+        return;
       }
-      function_prefix = get_prefix(substr, 'FUNCTION');
-      if (function_prefix.length > 0) {
-        token_list.push({
-          token_type: 'FUNCTION',
-          token_name: function_prefix.slice(0, function_prefix.length - 1)
-        });
-        token_list.push({
-          token_type: 'OPEN_PAREN',
-          token_name: '('
-        });
-        ix += function_prefix.length;
-        continue;
+      return this._elt.css({
+        'background-color': '#cccccc'
+      });
+    };
+
+    LevelDisplay.prototype._hover_out = function() {
+      if (this.show_detail) {
+        return;
       }
-      variable_prefix = get_prefix(substr, 'VARIABLE');
-      if (variable_prefix.length > 0) {
-        token_list.push({
-          token_type: 'VARIABLE',
-          token_name: variable_prefix
-        });
-        ix += variable_prefix.length;
-        continue;
+      return this._elt.css({
+        'background-color': '#dddddd'
+      });
+    };
+
+    return LevelDisplay;
+
+  })();
+
+  LevelContainer = (function() {
+    function LevelContainer(levels) {
+      this.levels = levels;
+      this._elt = $('<div></div>');
+      this._selected = null;
+      this.refresh();
+    }
+
+    LevelContainer.prototype.elt = function() {
+      return this._elt;
+    };
+
+    LevelContainer.prototype.select = function(level_id) {
+      if (this._selected === level_id) {
+        return this._selected = null;
+      } else {
+        return this._selected = level_id;
       }
-      number_prefix = get_prefix(substr, 'NUMBER');
-      if (number_prefix.length > 0 && (token_list.length === 0 || ((_ref = token_list[token_list.length - 1].token_type) === 'OPERATION' || _ref === 'OPEN_PAREN' || _ref === 'CLOSE_PAREN' || _ref === 'COMMA'))) {
-        token_list.push({
-          token_type: 'NUMBER',
-          token_name: number_prefix
-        });
-        ix += number_prefix.length;
-        continue;
-      }
-      token_type_matched = false;
-      for (k in TOKEN_REGEX) {
-        v = TOKEN_REGEX[k];
-        if (v.exec(c) != null) {
-          token_list.push({
-            token_type: k,
-            token_name: c
+    };
+
+    LevelContainer.prototype.refresh = function() {
+      var info, level_disp, level_id, show_detail, _fn, _i, _len, _ref, _results;
+      this._elt.empty();
+      _ref = this.levels;
+      _fn = (function(_this) {
+        return function(level_id) {
+          return level_disp.elt().click(function() {
+            _this.select(level_id);
+            return _this.refresh();
           });
-          ix += 1;
-          token_type_matched = true;
-          break;
-        }
+        };
+      })(this);
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        info = _ref[_i];
+        level_id = info.level_id;
+        show_detail = this._selected === level_id;
+        level_disp = new LevelDisplay(info, show_detail);
+        _fn(level_id);
+        _results.push(this._elt.append(level_disp.elt()));
       }
-      if (token_type_matched) {
-        continue;
-      }
-      assert(false, "Token invalid " + substr);
-    }
-    return token_list;
-  };
+      return _results;
+    };
 
-  get_syntax_tree = function(expression_str) {
-    var token_list;
-    assert(expression_str.length > 0);
-    token_list = tokenize(expression_str);
-    return get_syntax_tree_helper(token_list);
-  };
+    return LevelContainer;
 
-  get_syntax_tree_helper = function(token_list) {
-    var best_depth, best_token, best_token_index, depth, function_args, i, left_token_list, right_token_list, t, _i, _ref, _ref1, _ref2, _ref3;
-    assert(token_list.length > 0);
-    depth = 0;
-    best_token_index = -1;
-    best_depth = -1;
-    for (i = _i = 0, _ref = token_list.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-      t = token_list[i];
-      switch (t.token_type) {
-        case 'OPEN_PAREN':
-          depth += 1;
-          break;
-        case 'CLOSE_PAREN':
-          depth -= 1;
-          break;
-        case 'OPERATION':
-          if (best_token_index === -1 || depth < best_depth || (depth === best_depth && PRECEDENCE[t.token_name] <= PRECEDENCE[token_list[best_token_index].token_name])) {
-            best_token_index = i;
-            best_depth = depth;
-          }
-      }
-      assert(depth >= 0);
-    }
-    assert(depth === 0);
-    if (best_depth === 0) {
-      assert(best_token_index > 0);
-      assert(best_token_index < token_list.length);
-      left_token_list = token_list.slice(0, best_token_index);
-      right_token_list = token_list.slice(best_token_index + 1, token_list.length);
-      best_token = token_list[best_token_index];
-      return {
-        token_type: best_token.token_type,
-        token_name: best_token.token_name,
-        children: [get_syntax_tree_helper(left_token_list), get_syntax_tree_helper(right_token_list)]
-      };
-    }
-    t = token_list[0];
-    if ((_ref1 = t.token_type) === 'FUNCTION') {
-      assert(token_list.length >= 3);
-      assert(token_list[1].token_type === 'OPEN_PAREN');
-      assert(token_list[token_list.length - 1].token_type === 'CLOSE_PAREN');
-      function_args = token_list.slice(2, token_list.length - 1);
-      return {
-        token_type: t.token_type,
-        token_name: t.token_name,
-        children: [get_syntax_tree_helper(function_args)]
-      };
-    }
-    if ((_ref2 = t.token_type) === 'VARIABLE' || _ref2 === 'NUMBER') {
-      assert(token_list.length === 1);
-      return {
-        token_type: t.token_type,
-        token_name: t.token_name
-      };
-    }
-    if ((_ref3 = t.token_type) === 'OPEN_PAREN') {
-      assert(token_list[token_list.length - 1].token_type === 'CLOSE_PAREN');
-      return get_syntax_tree_helper(token_list.slice(1, token_list.length - 1));
-    }
-    return assert(false, "invalid");
-  };
+  })();
 
-  evaluate = function(syntax_tree, user_functions, user_variables) {
-    var elt, evaluated_children, fn, i, more_variables, sub_tree, _i, _ref;
-    switch (syntax_tree.token_type) {
-      case 'NUMBER':
-        return parseFloat(syntax_tree.token_name);
-      case 'VARIABLE':
-        assert(syntax_tree.token_name in user_variables);
-        return user_variables[syntax_tree.token_name];
-      case 'OPERATION':
-        evaluated_children = (function() {
-          var _i, _len, _ref, _results;
-          _ref = syntax_tree.children;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            elt = _ref[_i];
-            _results.push(evaluate(elt, user_functions, user_variables));
-          }
-          return _results;
-        })();
-        switch (syntax_tree.token_name) {
-          case '+':
-            return evaluated_children.reduce(function(t, s) {
-              return t + s;
-            });
-          case '*':
-            return evaluated_children.reduce(function(t, s) {
-              return t * s;
-            });
-          case '^':
-            assert(evaluated_children.length === 2);
-            return Math.pow(evaluated_children[0], evaluated_children[1]);
-          case '/':
-            assert(evaluated_children.length === 2);
-            assert(evaluated_children[1] !== 0);
-            return evaluated_children[0] / evaluated_children[1];
-          case '-':
-            assert(evaluated_children.length === 2);
-            return evaluated_children[0] - evaluated_children[1];
-        }
-        break;
-      case 'FUNCTION':
-        assert(syntax_tree.token_name in user_functions);
-        fn = user_functions[syntax_tree.token_name];
-        assert(fn.inputs.length === syntax_tree.children.length);
-        evaluated_children = (function() {
-          var _i, _len, _ref, _results;
-          _ref = syntax_tree.children;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            elt = _ref[_i];
-            _results.push(evaluate(elt, user_functions, user_variables));
-          }
-          return _results;
-        })();
-        sub_tree = get_syntax_tree(fn.output_expression_str);
-        more_variables = user_variables;
-        for (i = _i = 0, _ref = fn.inputs.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-          more_variables[fn.inputs[i]] = evaluated_children[i];
-        }
-        return evaluate(sub_tree, user_functions, more_variables);
-    }
-    return assert(false);
-  };
-
-  exports.tokenize = tokenize;
-
-  exports.get_syntax_tree = get_syntax_tree;
-
-  exports.get_syntax_tree_helper = get_syntax_tree_helper;
-
-  exports.evaluate = evaluate;
-
-  exports.evaluate_string = function(s) {
-    var ast, e;
-    try {
-      ast = get_syntax_tree(s);
-      return evaluate(ast, {}, {});
-    } catch (_error) {
-      e = _error;
-      throw new Error("Syntax error in input: \"" + s + "\"");
-    }
-  };
+  exports.LevelContainer = LevelContainer;
 
 }).call(this);
 
-},{"assert":11,"util":15}],4:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 (function() {
   var $ajax, ALL_TOOLS, CHECKMARK_SVG, ICONS, Path, SVG, ToolContainer, ToolIcon, mustache, render_to_jq,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -3030,11 +2901,11 @@ function hasOwnProperty(obj, prop) {
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./support/isBuffer":14,"_process":13,"inherits":12}],16:[function(require,module,exports){
 (function() {
-  var ICONS, LevelDisplay, LevelInfo, PlayerInfo, ToolContainer, evaluate, get_syntax_tree, _ref;
-
-  _ref = require('input/eval.coffee'), evaluate = _ref.evaluate, get_syntax_tree = _ref.get_syntax_tree;
+  var ICONS, LevelContainer, LevelInfo, PlayerInfo, ToolContainer;
 
   ToolContainer = require('shop/toolshop.coffee').ToolContainer;
+
+  LevelContainer = require('level_container.coffee').LevelContainer;
 
   LevelInfo = (function() {
     function LevelInfo(_arg) {
@@ -3054,40 +2925,6 @@ function hasOwnProperty(obj, prop) {
 
   })();
 
-  LevelDisplay = (function() {
-    var TMPL;
-
-    TMPL = '<div class="level-row">\n  <div class="disp-tc level-name"></div>\n  <div class="disp-tc level-progress"></div>\n</div>';
-
-    function LevelDisplay(level_info) {
-      var i, progress_txt, _i;
-      this.level_info = level_info;
-      this._elt = $(TMPL);
-      (this._elt.find('div.level-name')).text(this.level_info.name);
-      progress_txt = "";
-      for (i = _i = 0; _i < 3; i = ++_i) {
-        if (this.level_info.stars > i) {
-          progress_txt += "\u2605";
-        } else {
-          progress_txt += "\u2606";
-        }
-      }
-      (this._elt.find('div.level-progress')).text(progress_txt);
-      this._elt.click((function(_this) {
-        return function() {
-          return window.location.href = "level\#" + _this.level_info.level_id;
-        };
-      })(this));
-    }
-
-    LevelDisplay.prototype.elt = function() {
-      return this._elt;
-    };
-
-    return LevelDisplay;
-
-  })();
-
   ICONS = {
     locator: require('toolbox/locator_icon.coffee'),
     ruler: require('toolbox/ruler_icon.coffee'),
@@ -3095,23 +2932,25 @@ function hasOwnProperty(obj, prop) {
   };
 
   window.onload = function() {
-    var info, level_info, levels_container, name, player_info, tool_container, _i, _len, _ref1, _ref2;
+    var info, level_info, levels, levels_container, name, player_info, tool_container, _i, _len, _ref, _ref1;
     ($(document.body)).find('.logged-in-name').text(JS_DATA.UserDisplayName);
-    levels_container = ($(document.body)).find('.home-levels');
-    _ref1 = JS_DATA.LevelData;
-    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-      info = _ref1[_i];
+    levels = [];
+    _ref = JS_DATA.LevelData;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      info = _ref[_i];
       name = "Level " + info.LevelID.slice(1);
       level_info = new LevelInfo({
         level_id: info.LevelID,
         name: name,
         stars: info.Stars
       });
-      levels_container.append((new LevelDisplay(level_info)).elt());
+      levels.push(level_info);
     }
+    levels_container = new LevelContainer(levels);
+    ($(document.body)).find('.home-levels').append(levels_container.elt());
     player_info = new PlayerInfo({
       gold: JS_DATA.UserInfo.Gold,
-      tools: (_ref2 = JS_DATA.UserInfo.Tools) != null ? _ref2 : []
+      tools: (_ref1 = JS_DATA.UserInfo.Tools) != null ? _ref1 : []
     });
     ($(document.body)).find('.gold-count').text("Gold: " + player_info.gold);
     tool_container = new ToolContainer(player_info);
@@ -3120,5 +2959,5 @@ function hasOwnProperty(obj, prop) {
 
 }).call(this);
 
-},{"input/eval.coffee":3,"shop/toolshop.coffee":4,"toolbox/locator_icon.coffee":6,"toolbox/radius_finder_icon.coffee":7,"toolbox/ruler_icon.coffee":8}]},{},[16]);
+},{"level_container.coffee":3,"shop/toolshop.coffee":4,"toolbox/locator_icon.coffee":6,"toolbox/radius_finder_icon.coffee":7,"toolbox/ruler_icon.coffee":8}]},{},[16]);
 
