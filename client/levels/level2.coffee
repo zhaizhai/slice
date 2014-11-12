@@ -3,18 +3,20 @@ Path = require 'paths-js/path'
 {Point, Polygon} = require 'geometry.coffee'
 {BaseLevel} = require 'levels/base.coffee'
 {SquareShape} = require 'input/shape_spec.coffee'
+{TieredScorer} = require 'levels/level_util.coffee'
 
-Level2Tools = {
-  locator: {
-    points: (('p' + idx) for idx in [0...4])
-  }
-  ruler: {
-    points: (('p' + idx) for idx in [0...4])
-  }
-}
+EPS = 0.001
+SCORER = new TieredScorer [
+  0.7, 0.95, (1 - EPS)
+], (1 + EPS)
 
 exports.Level2 = new BaseLevel {
-  allowed_tools: Level2Tools
+  allowed_tools:
+    locator:
+      points: (('p' + idx) for idx in [0...4])
+    ruler:
+      points: (('p' + idx) for idx in [0...4])
+
   input_shape: SquareShape
 
   dims: {
@@ -42,44 +44,6 @@ exports.Level2 = new BaseLevel {
     for pt, idx in fig.points()
       @add ('p' + idx), pt
 
-  # TODO: factor out some of the rendering
-  render_figure: ->
-    d = SVG.util.make_closed_path @entities.figure.points()
-    return SVG.path {
-      d: d, fill: 'blue', opacity: 0.2
-    }
-
-  render_nodes: ->
-    nodes = []
-    for pt, idx in @entities.figure.points()
-      hook = @get_hook ('p' + idx)
-      if hook?
-        nodes.push hook.render()
-      else
-        nodes.push (SVG.circle {
-          cx: pt.x, cy: pt.y, r: 5, fill: 'red', stroke: 'black'
-        })
-    return SVG.g {}, nodes
-
-  render: (container) ->
-    container.appendChild @render_background()
-    container.appendChild @render_figure()
-    container.appendChild @render_nodes()
-
-  _score: (area) ->
-    opt = @params.w * @params.w
-    r = area / opt
-    EPS = 0.001
-    if r >= (1 + EPS)
-      console.log "What?? should be impossible"
-    if r >= (1 - EPS)
-      return 3
-    if r >= 0.95
-      return 2
-    if r >= 0.7
-      return 1
-    return 0
-
   evaluate: (shape) ->
     poly = shape.polygon()
     fig = @entities.figure
@@ -89,5 +53,7 @@ exports.Level2 = new BaseLevel {
     for pt in fig.points()
       if poly.contains pt
         return {score: -1}
-    return {score: @_score poly.area()}
+
+    opt = @params.w * @params.w
+    return {score: SCORER.score (poly.area() / opt)}
 }

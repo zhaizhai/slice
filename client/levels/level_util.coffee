@@ -12,5 +12,4 @@ class TieredScorer
       idx -= 1
     return 0
 
-
 exports.TieredScorer = TieredScorer

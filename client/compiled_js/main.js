@@ -2,6 +2,8 @@
 (function() {
   var Circle, EPSILON, Point, Polygon, Segment, assert;
 
+
+
   assert = require('assert');
 
   exports.EPSILON = EPSILON = 0.001;
@@ -218,9 +220,11 @@
 
 }).call(this);
 
-},{"assert":24}],2:[function(require,module,exports){
+},{"assert":25}],2:[function(require,module,exports){
 (function() {
   var $ajax, assert;
+
+
 
   assert = require('assert');
 
@@ -264,9 +268,11 @@
 
 }).call(this);
 
-},{"assert":24}],3:[function(require,module,exports){
+},{"assert":25}],3:[function(require,module,exports){
 (function() {
   var DEFAULT_FUNCTIONS, PRECEDENCE, TOKEN_REGEX, assert, evaluate, func, func_names, get_prefix, get_syntax_tree, get_syntax_tree_helper, tokenize, util, _fn, _i, _len;
+
+
 
   assert = require('assert');
 
@@ -524,9 +530,11 @@
 
 }).call(this);
 
-},{"assert":24,"util":29}],4:[function(require,module,exports){
+},{"assert":25,"util":30}],4:[function(require,module,exports){
 (function() {
   var Path, Point, Polygon, SVG, ShapeMaker, _ref;
+
+
 
   SVG = require('svg.coffee');
 
@@ -540,7 +548,8 @@
     TMPL = '<div class="toolbox-section">\n  <div class="input-title"></div>\n  <div class="container"></div>\n</div>';
 
     function ShapeMaker(_shape, _handler) {
-      var container, k, submit, v, _ref1;
+      var container, k, submit, v, _ref1,
+        _this = this;
       this._shape = _shape;
       this._handler = _handler;
       this._elt = $(TMPL);
@@ -553,11 +562,9 @@
         this._inputs[k] = v();
         container.append(this._inputs[k].elt());
       }
-      submit = ($('<button>Submit</button>')).click((function(_this) {
-        return function() {
-          return _this._on_submit();
-        };
-      })(this));
+      submit = ($('<button>Submit</button>')).click(function() {
+        return _this._on_submit();
+      });
       container.append(submit);
     }
 
@@ -589,9 +596,11 @@
 
 }).call(this);
 
-},{"geometry.coffee":1,"paths-js/path":23,"svg.coffee":13}],5:[function(require,module,exports){
+},{"geometry.coffee":1,"paths-js/path":24,"svg.coffee":14}],5:[function(require,module,exports){
 (function() {
   var Coords, CoordsInput, Length, LengthInput, Path, Point, Polygon, SVG, evaluate_string, mustache, render_to_jq, _ref;
+
+
 
   mustache = require('mustache');
 
@@ -728,62 +737,19 @@
 
 }).call(this);
 
-},{"geometry.coffee":1,"input/eval.coffee":3,"mustache":22,"paths-js/path":23,"svg.coffee":13}],6:[function(require,module,exports){
+},{"geometry.coffee":1,"input/eval.coffee":3,"mustache":23,"paths-js/path":24,"svg.coffee":14}],6:[function(require,module,exports){
 (function() {
-  var BaseLevel, HookBinding, Path, Point, Polygon, SVG, make_axes, _ref;
+  var BaseLevel, Circle, DEFAULT_RENDERERS, HookBinding, Path, Point, Polygon, SVG, make_axes, _ref, _ref1;
+
+
 
   SVG = require('svg.coffee');
 
   Path = require('paths-js/path');
 
-  _ref = require('geometry.coffee'), Point = _ref.Point, Polygon = _ref.Polygon;
+  _ref = require('geometry.coffee'), Point = _ref.Point, Polygon = _ref.Polygon, Circle = _ref.Circle;
 
-  exports.make_axes = make_axes = function(dims) {
-    var bottom, left, right, top, x_axis, y_axis, _ref1, _ref2, _ref3, _ref4;
-    _ref1 = [-dims.offset_x, dims.width - dims.offset_x], left = _ref1[0], right = _ref1[1];
-    _ref2 = [-dims.height + dims.offset_y, dims.offset_y], bottom = _ref2[0], top = _ref2[1];
-    _ref3 = [left + 2, right - 2], left = _ref3[0], right = _ref3[1];
-    _ref4 = [bottom + 2, top - 2], bottom = _ref4[0], top = _ref4[1];
-    x_axis = Path().moveto(left, 0);
-    x_axis = x_axis.lineto(right, 0);
-    x_axis = SVG.util.arrow(x_axis, {
-      tip: new Point(right, 0),
-      length: 8,
-      angle: 20,
-      direction: 0
-    });
-    x_axis = SVG.util.arrow(x_axis, {
-      tip: new Point(left, 0),
-      length: 8,
-      angle: 20,
-      direction: 180
-    });
-    y_axis = Path().moveto(0, bottom);
-    y_axis = y_axis.lineto(0, top);
-    y_axis = SVG.util.arrow(y_axis, {
-      tip: new Point(0, top),
-      length: 8,
-      angle: 20,
-      direction: 90
-    });
-    y_axis = SVG.util.arrow(y_axis, {
-      tip: new Point(0, bottom),
-      length: 8,
-      angle: 20,
-      direction: 270
-    });
-    return SVG.g({}, [
-      SVG.path({
-        d: x_axis.print(),
-        stroke: 'black',
-        opacity: 0.4
-      }), SVG.path({
-        d: y_axis.print(),
-        stroke: 'black',
-        opacity: 0.4
-      })
-    ]);
-  };
+  _ref1 = require('levels/render.coffee'), make_axes = _ref1.make_axes, DEFAULT_RENDERERS = _ref1.DEFAULT_RENDERERS;
 
   BaseLevel = (function() {
     var REQUIRED_PROPS;
@@ -836,9 +802,9 @@
     };
 
     BaseLevel.prototype.get_hook = function(k) {
-      var best_hook, hook, hooks, _i, _len, _ref1;
+      var best_hook, hook, hooks, _i, _len, _ref2;
       best_hook = null;
-      hooks = (_ref1 = this._render_hooks[k]) != null ? _ref1 : [];
+      hooks = (_ref2 = this._render_hooks[k]) != null ? _ref2 : [];
       for (_i = 0, _len = hooks.length; _i < _len; _i++) {
         hook = hooks[_i];
         if ((best_hook != null) && hook.precedence <= best_hook.precedence) {
@@ -861,23 +827,59 @@
       return make_axes(this.dims);
     };
 
+    BaseLevel.prototype.render = function(container) {
+      var ENTITY_TYPE, elt, hook, k, layer, layer_names, layers, name, type, v, _i, _j, _len, _len1, _ref2, _results;
+      layer_names = ['shape', 'circle', 'node'];
+      layers = {};
+      for (_i = 0, _len = layer_names.length; _i < _len; _i++) {
+        name = layer_names[_i];
+        layers[name] = [];
+      }
+      ENTITY_TYPE = function(ent) {
+        if (ent instanceof Point) {
+          return 'node';
+        } else if (ent instanceof Polygon) {
+          return 'shape';
+        } else if (ent instanceof Circle) {
+          return 'circle';
+        }
+        console.log('invalid', ent);
+        throw new Error("Invalid entity " + ent);
+      };
+      _ref2 = this.entities;
+      for (k in _ref2) {
+        v = _ref2[k];
+        type = ENTITY_TYPE(v);
+        hook = this.get_hook(k);
+        elt = hook != null ? hook.render() : DEFAULT_RENDERERS[type](v);
+        layers[type].push(elt);
+      }
+      container.appendChild(this.render_background());
+      _results = [];
+      for (_j = 0, _len1 = layer_names.length; _j < _len1; _j++) {
+        name = layer_names[_j];
+        layer = SVG.g({}, layers[name]);
+        _results.push(container.appendChild(layer));
+      }
+      return _results;
+    };
+
     return BaseLevel;
 
   })();
 
   HookBinding = (function() {
     function HookBinding(level, precedence, hook_fn) {
+      var _this = this;
       this.level = level;
       this.precedence = precedence;
       this.hook_fn = hook_fn;
       this._val = null;
       this._hook = {
         precedence: this.precedence,
-        render: (function(_this) {
-          return function() {
-            return _this.hook_fn(_this._val);
-          };
-        })(this)
+        render: function() {
+          return _this.hook_fn(_this._val);
+        }
       };
     }
 
@@ -906,9 +908,11 @@
 
 }).call(this);
 
-},{"geometry.coffee":1,"paths-js/path":23,"svg.coffee":13}],7:[function(require,module,exports){
+},{"geometry.coffee":1,"levels/render.coffee":13,"paths-js/path":24,"svg.coffee":14}],7:[function(require,module,exports){
 (function() {
-  var BaseLevel, Path, Point, Polygon, SVG, SquareShape, i, idx, _ref;
+  var BaseLevel, EPS, Path, Point, Polygon, SCORER, SVG, SquareShape, TieredScorer, i, idx, _ref;
+
+
 
   SVG = require('svg.coffee');
 
@@ -919,6 +923,12 @@
   BaseLevel = require('levels/base.coffee').BaseLevel;
 
   SquareShape = require('input/shape_spec.coffee').SquareShape;
+
+  TieredScorer = require('levels/level_util.coffee').TieredScorer;
+
+  EPS = 0.001;
+
+  SCORER = new TieredScorer([0.7, 0.95, 1 - EPS], 1 + EPS);
 
   exports.Level1 = new BaseLevel({
     allowed_tools: {
@@ -974,62 +984,8 @@
       }
       return _results;
     },
-    render_figure: function() {
-      var d;
-      d = SVG.util.make_closed_path(this.entities.figure.points());
-      return SVG.path({
-        d: d,
-        fill: 'blue',
-        opacity: 0.2
-      });
-    },
-    render_nodes: function() {
-      var hook, nodes, pt, _i, _len, _ref1;
-      nodes = [];
-      _ref1 = this.entities.figure.points();
-      for (idx = _i = 0, _len = _ref1.length; _i < _len; idx = ++_i) {
-        pt = _ref1[idx];
-        hook = this.get_hook('p' + idx);
-        if (hook != null) {
-          nodes.push(hook.render());
-        } else {
-          nodes.push(SVG.circle({
-            cx: pt.x,
-            cy: pt.y,
-            r: 5,
-            fill: 'red',
-            stroke: 'black'
-          }));
-        }
-      }
-      return SVG.g({}, nodes);
-    },
-    render: function(container) {
-      container.appendChild(this.render_background());
-      container.appendChild(this.render_figure());
-      return container.appendChild(this.render_nodes());
-    },
-    _score: function(area) {
-      var EPS, opt, r;
-      opt = this.params.w * this.params.w;
-      r = area / opt;
-      EPS = 0.001;
-      if (r >= (1 + EPS)) {
-        console.log("What?? should be impossible");
-      }
-      if (r >= (1 - EPS)) {
-        return 3;
-      }
-      if (r >= 0.95) {
-        return 2;
-      }
-      if (r >= 0.7) {
-        return 1;
-      }
-      return 0;
-    },
     evaluate: function(shape) {
-      var fig, poly, pt, _i, _len, _ref1;
+      var fig, opt, poly, pt, _i, _len, _ref1;
       poly = shape.polygon();
       fig = this.entities.figure;
       if (fig.intersects(poly)) {
@@ -1046,17 +1002,20 @@
           };
         }
       }
+      opt = this.params.w * this.params.w;
       return {
-        score: this._score(poly.area())
+        score: SCORER.score(poly.area() / opt)
       };
     }
   });
 
 }).call(this);
 
-},{"geometry.coffee":1,"input/shape_spec.coffee":5,"levels/base.coffee":6,"paths-js/path":23,"svg.coffee":13}],8:[function(require,module,exports){
+},{"geometry.coffee":1,"input/shape_spec.coffee":5,"levels/base.coffee":6,"levels/level_util.coffee":11,"paths-js/path":24,"svg.coffee":14}],8:[function(require,module,exports){
 (function() {
-  var BaseLevel, Level2Tools, Path, Point, Polygon, SVG, SquareShape, i, idx, _i, _j, _ref, _results, _results1;
+  var BaseLevel, EPS, Path, Point, Polygon, SCORER, SVG, SquareShape, TieredScorer, i, idx, _i, _j, _ref, _results, _results1;
+
+
 
   SVG = require('svg.coffee');
 
@@ -1068,31 +1027,35 @@
 
   SquareShape = require('input/shape_spec.coffee').SquareShape;
 
-  Level2Tools = {
-    locator: {
-      points: (function() {
-        var _i, _results;
-        _results = [];
-        for (idx = _i = 0; _i < 4; idx = ++_i) {
-          _results.push('p' + idx);
-        }
-        return _results;
-      })()
-    },
-    ruler: {
-      points: (function() {
-        var _i, _results;
-        _results = [];
-        for (idx = _i = 0; _i < 4; idx = ++_i) {
-          _results.push('p' + idx);
-        }
-        return _results;
-      })()
-    }
-  };
+  TieredScorer = require('levels/level_util.coffee').TieredScorer;
+
+  EPS = 0.001;
+
+  SCORER = new TieredScorer([0.7, 0.95, 1 - EPS], 1 + EPS);
 
   exports.Level2 = new BaseLevel({
-    allowed_tools: Level2Tools,
+    allowed_tools: {
+      locator: {
+        points: (function() {
+          var _i, _results;
+          _results = [];
+          for (idx = _i = 0; _i < 4; idx = ++_i) {
+            _results.push('p' + idx);
+          }
+          return _results;
+        })()
+      },
+      ruler: {
+        points: (function() {
+          var _i, _results;
+          _results = [];
+          for (idx = _i = 0; _i < 4; idx = ++_i) {
+            _results.push('p' + idx);
+          }
+          return _results;
+        })()
+      }
+    },
     input_shape: SquareShape,
     dims: {
       width: 500,
@@ -1134,62 +1097,8 @@
       }
       return _results2;
     },
-    render_figure: function() {
-      var d;
-      d = SVG.util.make_closed_path(this.entities.figure.points());
-      return SVG.path({
-        d: d,
-        fill: 'blue',
-        opacity: 0.2
-      });
-    },
-    render_nodes: function() {
-      var hook, nodes, pt, _k, _len, _ref1;
-      nodes = [];
-      _ref1 = this.entities.figure.points();
-      for (idx = _k = 0, _len = _ref1.length; _k < _len; idx = ++_k) {
-        pt = _ref1[idx];
-        hook = this.get_hook('p' + idx);
-        if (hook != null) {
-          nodes.push(hook.render());
-        } else {
-          nodes.push(SVG.circle({
-            cx: pt.x,
-            cy: pt.y,
-            r: 5,
-            fill: 'red',
-            stroke: 'black'
-          }));
-        }
-      }
-      return SVG.g({}, nodes);
-    },
-    render: function(container) {
-      container.appendChild(this.render_background());
-      container.appendChild(this.render_figure());
-      return container.appendChild(this.render_nodes());
-    },
-    _score: function(area) {
-      var EPS, opt, r;
-      opt = this.params.w * this.params.w;
-      r = area / opt;
-      EPS = 0.001;
-      if (r >= (1 + EPS)) {
-        console.log("What?? should be impossible");
-      }
-      if (r >= (1 - EPS)) {
-        return 3;
-      }
-      if (r >= 0.95) {
-        return 2;
-      }
-      if (r >= 0.7) {
-        return 1;
-      }
-      return 0;
-    },
     evaluate: function(shape) {
-      var fig, poly, pt, _k, _len, _ref1;
+      var fig, opt, poly, pt, _k, _len, _ref1;
       poly = shape.polygon();
       fig = this.entities.figure;
       if (fig.intersects(poly)) {
@@ -1206,17 +1115,20 @@
           };
         }
       }
+      opt = this.params.w * this.params.w;
       return {
-        score: this._score(poly.area())
+        score: SCORER.score(poly.area() / opt)
       };
     }
   });
 
 }).call(this);
 
-},{"geometry.coffee":1,"input/shape_spec.coffee":5,"levels/base.coffee":6,"paths-js/path":23,"svg.coffee":13}],9:[function(require,module,exports){
+},{"geometry.coffee":1,"input/shape_spec.coffee":5,"levels/base.coffee":6,"levels/level_util.coffee":11,"paths-js/path":24,"svg.coffee":14}],9:[function(require,module,exports){
 (function() {
   var BaseLevel, CircleShape, EPS, Path, Point, Polygon, SCORER, SVG, TieredScorer, idx, _i, _j, _ref, _results, _results1;
+
+
 
   SVG = require('svg.coffee');
 
@@ -1280,41 +1192,6 @@
       }
       return _results2;
     },
-    render_figure: function() {
-      var d;
-      d = SVG.util.make_closed_path(this.entities.figure.points());
-      return SVG.path({
-        d: d,
-        fill: 'blue',
-        opacity: 0.2
-      });
-    },
-    render_nodes: function() {
-      var hook, nodes, pt, _k, _len, _ref1;
-      nodes = [];
-      _ref1 = this.entities.figure.points();
-      for (idx = _k = 0, _len = _ref1.length; _k < _len; idx = ++_k) {
-        pt = _ref1[idx];
-        hook = this.get_hook('p' + idx);
-        if (hook != null) {
-          nodes.push(hook.render());
-        } else {
-          nodes.push(SVG.circle({
-            cx: pt.x,
-            cy: pt.y,
-            r: 5,
-            fill: 'red',
-            stroke: 'black'
-          }));
-        }
-      }
-      return SVG.g({}, nodes);
-    },
-    render: function(container) {
-      container.appendChild(this.render_background());
-      container.appendChild(this.render_figure());
-      return container.appendChild(this.render_nodes());
-    },
     evaluate: function(shape) {
       var fig, opt, x, y, _ref1;
       fig = this.entities.figure;
@@ -1335,9 +1212,11 @@
 
 }).call(this);
 
-},{"geometry.coffee":1,"input/shape_spec.coffee":5,"levels/base.coffee":6,"levels/level_util.coffee":11,"paths-js/path":23,"svg.coffee":13}],10:[function(require,module,exports){
+},{"geometry.coffee":1,"input/shape_spec.coffee":5,"levels/base.coffee":6,"levels/level_util.coffee":11,"paths-js/path":24,"svg.coffee":14}],10:[function(require,module,exports){
 (function() {
   var BaseLevel, Circle, EPS, Path, Point, Polygon, SCORER, SVG, SquareShape, TieredScorer, _i, _ref, _results;
+
+
 
   SVG = require('svg.coffee');
 
@@ -1381,49 +1260,6 @@
       r = this.params.r;
       return this.add('c1', new Circle(new Point(0, 0), r));
     },
-    render_figure: function() {
-      var d;
-      d = SVG.util.make_closed_path(this.entities.figure.points());
-      return SVG.path({
-        d: d,
-        fill: 'blue',
-        opacity: 0.2
-      });
-    },
-    render_nodes: function() {
-      var hook, idx, nodes, pt, _j, _len, _ref1;
-      nodes = [];
-      _ref1 = this.entities.figure.points();
-      for (idx = _j = 0, _len = _ref1.length; _j < _len; idx = ++_j) {
-        pt = _ref1[idx];
-        hook = this.get_hook('p' + idx);
-        if (hook != null) {
-          nodes.push(hook.render());
-        } else {
-          nodes.push(SVG.circle({
-            cx: pt.x,
-            cy: pt.y,
-            r: 5,
-            fill: 'red',
-            stroke: 'black'
-          }));
-        }
-      }
-      return SVG.g({}, nodes);
-    },
-    render: function(container) {
-      var hook, svg_elt;
-      hook = this.get_hook('c1');
-      svg_elt = hook != null ? hook.render() : SVG.circle({
-        cx: 0,
-        cy: 0,
-        r: this.params.r,
-        fill: 'none',
-        stroke: 'black'
-      });
-      container.appendChild(this.render_background());
-      return container.appendChild(svg_elt);
-    },
     evaluate: function(shape) {
       var area, o, opt, pt, r, _j, _len, _ref1;
       r = this.params.r;
@@ -1447,9 +1283,11 @@
 
 }).call(this);
 
-},{"geometry.coffee":1,"input/shape_spec.coffee":5,"levels/base.coffee":6,"levels/level_util.coffee":11,"paths-js/path":23,"svg.coffee":13}],11:[function(require,module,exports){
+},{"geometry.coffee":1,"input/shape_spec.coffee":5,"levels/base.coffee":6,"levels/level_util.coffee":11,"paths-js/path":24,"svg.coffee":14}],11:[function(require,module,exports){
 (function() {
   var TieredScorer;
+
+
 
   TieredScorer = (function() {
     function TieredScorer(tiers, max) {
@@ -1483,6 +1321,8 @@
 },{}],12:[function(require,module,exports){
 (function() {
   var LEVELS, Level1, Level2, Level3, Level4, rand_choice, rand_int;
+
+
 
   Level1 = require('levels/level1.coffee').Level1;
 
@@ -1527,9 +1367,102 @@
 
 },{"levels/level1.coffee":7,"levels/level2.coffee":8,"levels/level3.coffee":9,"levels/level4.coffee":10}],13:[function(require,module,exports){
 (function() {
+  var Circle, Path, Point, Polygon, SVG, make_axes, _ref;
+
+
+
+  SVG = require('svg.coffee');
+
+  Path = require('paths-js/path');
+
+  _ref = require('geometry.coffee'), Point = _ref.Point, Polygon = _ref.Polygon, Circle = _ref.Circle;
+
+  exports.make_axes = make_axes = function(dims) {
+    var bottom, left, right, top, x_axis, y_axis, _ref1, _ref2, _ref3, _ref4;
+    _ref1 = [-dims.offset_x, dims.width - dims.offset_x], left = _ref1[0], right = _ref1[1];
+    _ref2 = [-dims.height + dims.offset_y, dims.offset_y], bottom = _ref2[0], top = _ref2[1];
+    _ref3 = [left + 2, right - 2], left = _ref3[0], right = _ref3[1];
+    _ref4 = [bottom + 2, top - 2], bottom = _ref4[0], top = _ref4[1];
+    x_axis = Path().moveto(left, 0);
+    x_axis = x_axis.lineto(right, 0);
+    x_axis = SVG.util.arrow(x_axis, {
+      tip: new Point(right, 0),
+      length: 8,
+      angle: 20,
+      direction: 0
+    });
+    x_axis = SVG.util.arrow(x_axis, {
+      tip: new Point(left, 0),
+      length: 8,
+      angle: 20,
+      direction: 180
+    });
+    y_axis = Path().moveto(0, bottom);
+    y_axis = y_axis.lineto(0, top);
+    y_axis = SVG.util.arrow(y_axis, {
+      tip: new Point(0, top),
+      length: 8,
+      angle: 20,
+      direction: 90
+    });
+    y_axis = SVG.util.arrow(y_axis, {
+      tip: new Point(0, bottom),
+      length: 8,
+      angle: 20,
+      direction: 270
+    });
+    return SVG.g({}, [
+      SVG.path({
+        d: x_axis.print(),
+        stroke: 'black',
+        opacity: 0.4
+      }), SVG.path({
+        d: y_axis.print(),
+        stroke: 'black',
+        opacity: 0.4
+      })
+    ]);
+  };
+
+  exports.DEFAULT_RENDERERS = {
+    node: function(pt) {
+      return SVG.circle({
+        cx: pt.x,
+        cy: pt.y,
+        r: 5,
+        fill: 'red',
+        stroke: 'black'
+      });
+    },
+    shape: function(poly) {
+      var d;
+      d = SVG.util.make_closed_path(poly.points());
+      return SVG.path({
+        d: d,
+        fill: 'blue',
+        opacity: 0.2
+      });
+    },
+    circle: function(circ) {
+      return SVG.circle({
+        cx: circ.center.x,
+        cy: circ.center.y,
+        r: circ.radius,
+        fill: 'none',
+        stroke: 'black'
+      });
+    }
+  };
+
+}).call(this);
+
+},{"geometry.coffee":1,"paths-js/path":24,"svg.coffee":14}],14:[function(require,module,exports){
+(function() {
   var Path, Point, SVG, assert, k, to_radians, v,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __slice = [].slice;
+
+
 
   assert = require('assert');
 
@@ -1538,7 +1471,8 @@
   Point = require('geometry.coffee').Point;
 
   SVG = (function() {
-    var MOUSE_EVTS, PRIMITIVES, SVG_NS, create_elt, make_primitive, prim, _i, _len;
+    var MOUSE_EVTS, PRIMITIVES, SVG_NS, create_elt, make_primitive, prim, _i, _len,
+      _this = this;
 
     function SVG() {}
 
@@ -1605,7 +1539,7 @@
 
     return SVG;
 
-  })();
+  }).call(this);
 
   to_radians = function(deg) {
     return Math.PI * deg / 180;
@@ -1644,9 +1578,11 @@
 
 }).call(this);
 
-},{"assert":24,"geometry.coffee":1,"paths-js/path":23}],14:[function(require,module,exports){
+},{"assert":25,"geometry.coffee":1,"paths-js/path":24}],15:[function(require,module,exports){
 (function() {
   var SVG, ToolGraphics;
+
+
 
   SVG = require('svg.coffee');
 
@@ -1750,11 +1686,13 @@
 
 }).call(this);
 
-},{"svg.coffee":13}],15:[function(require,module,exports){
+},{"svg.coffee":14}],16:[function(require,module,exports){
 (function() {
   var COLOR_ICON, EventEmitter, GRAY_ICON, HookBinding, Locator, Path, SVG, ToolGraphics, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+
 
   SVG = require('svg.coffee');
 
@@ -1772,24 +1710,19 @@
     __extends(Locator, _super);
 
     function Locator(level, level_data, scene) {
+      var _this = this;
       this.level = level;
       this.level_data = level_data;
       this.scene = scene;
-      this._selected = new HookBinding(this.level, 3, (function(_this) {
-        return function(pt_id) {
-          return _this._make_node(pt_id, 'selected');
-        };
-      })(this));
-      this._hover = new HookBinding(this.level, 1, (function(_this) {
-        return function(pt_id) {
-          return _this._make_node(pt_id, 'hover');
-        };
-      })(this));
-      this._highlight = new HookBinding(this.level, 5, (function(_this) {
-        return function(pt_id) {
-          return _this._make_node(pt_id, 'hover');
-        };
-      })(this));
+      this._selected = new HookBinding(this.level, 3, function(pt_id) {
+        return _this._make_node(pt_id, 'selected');
+      });
+      this._hover = new HookBinding(this.level, 1, function(pt_id) {
+        return _this._make_node(pt_id, 'hover');
+      });
+      this._highlight = new HookBinding(this.level, 5, function(pt_id) {
+        return _this._make_node(pt_id, 'hover');
+      });
       this._gfx = new ToolGraphics(this.level);
     }
 
@@ -1799,21 +1732,20 @@
     };
 
     Locator.prototype.activate = function() {
-      var pt_id, _i, _len, _ref1, _results;
+      var pt_id, _i, _len, _ref1, _results,
+        _this = this;
       _ref1 = this.level_data.points;
       _results = [];
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         pt_id = _ref1[_i];
-        _results.push((function(_this) {
-          return function(pt_id) {
-            return _this.level.set_render_hook(pt_id, {
-              precedence: 0,
-              render: function() {
-                return _this._make_node(pt_id, 'default');
-              }
-            });
-          };
-        })(this)(pt_id));
+        _results.push((function(pt_id) {
+          return _this.level.set_render_hook(pt_id, {
+            precedence: 0,
+            render: function() {
+              return _this._make_node(pt_id, 'default');
+            }
+          });
+        })(pt_id));
       }
       return _results;
     };
@@ -1846,28 +1778,24 @@
     };
 
     Locator.prototype._make_node = function(pt_id, status) {
+      var _this = this;
       return this._gfx.make_node(pt_id, {
         status: status,
-        mouseenter: (function(_this) {
-          return function(e) {
-            return _this.hover(pt_id);
-          };
-        })(this),
-        mouseleave: (function(_this) {
-          return function(e) {
-            return _this.hover(null);
-          };
-        })(this),
-        click: (function(_this) {
-          return function(e) {
-            return _this.select(pt_id);
-          };
-        })(this)
+        mouseenter: function(e) {
+          return _this.hover(pt_id);
+        },
+        mouseleave: function(e) {
+          return _this.hover(null);
+        },
+        click: function(e) {
+          return _this.select(pt_id);
+        }
       });
     };
 
     Locator.prototype.measure = function() {
-      var pt, sel;
+      var pt, sel,
+        _this = this;
       sel = this._selected.get();
       if (sel == null) {
         return null;
@@ -1876,16 +1804,12 @@
       return {
         ref: sel,
         mesg: "Point at (" + pt.x + ", " + pt.y + ")",
-        mouseover: (function(_this) {
-          return function() {
-            return _this.highlight(sel);
-          };
-        })(this),
-        mouseout: (function(_this) {
-          return function() {
-            return _this.highlight(null);
-          };
-        })(this)
+        mouseover: function() {
+          return _this.highlight(sel);
+        },
+        mouseout: function() {
+          return _this.highlight(null);
+        }
       };
     };
 
@@ -1897,9 +1821,11 @@
 
 }).call(this);
 
-},{"events":25,"levels/base.coffee":6,"paths-js/path":23,"svg.coffee":13,"toolbox/graphics.coffee":14,"toolbox/locator_icon.coffee":16}],16:[function(require,module,exports){
+},{"events":26,"levels/base.coffee":6,"paths-js/path":24,"svg.coffee":14,"toolbox/graphics.coffee":15,"toolbox/locator_icon.coffee":17}],17:[function(require,module,exports){
 (function() {
   var LOCATOR_SVG_PATHS, Path, SVG, border, cross, make_icon, ticks, _ref;
+
+
 
   SVG = require('svg.coffee');
 
@@ -1990,11 +1916,13 @@
 
 }).call(this);
 
-},{"paths-js/path":23,"svg.coffee":13}],17:[function(require,module,exports){
+},{"paths-js/path":24,"svg.coffee":14}],18:[function(require,module,exports){
 (function() {
   var COLOR_ICON, EventEmitter, GRAY_ICON, HookBinding, Path, RadiusFinder, SVG, ToolGraphics, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+
 
   SVG = require('svg.coffee');
 
@@ -2012,19 +1940,16 @@
     __extends(RadiusFinder, _super);
 
     function RadiusFinder(level, level_data, scene) {
+      var _this = this;
       this.level = level;
       this.level_data = level_data;
       this.scene = scene;
-      this._selected = new HookBinding(this.level, 3, (function(_this) {
-        return function(circ_id) {
-          return _this._make_circ(circ_id, 'selected');
-        };
-      })(this));
-      this._hover = new HookBinding(this.level, 1, (function(_this) {
-        return function(circ_id) {
-          return _this._make_circ(circ_id, 'hover');
-        };
-      })(this));
+      this._selected = new HookBinding(this.level, 3, function(circ_id) {
+        return _this._make_circ(circ_id, 'selected');
+      });
+      this._hover = new HookBinding(this.level, 1, function(circ_id) {
+        return _this._make_circ(circ_id, 'hover');
+      });
       this._gfx = new ToolGraphics(this.level);
     }
 
@@ -2034,22 +1959,21 @@
     };
 
     RadiusFinder.prototype.activate = function() {
-      var circ_id, _i, _len, _ref1, _results;
+      var circ_id, _i, _len, _ref1, _results,
+        _this = this;
       _ref1 = this.level_data.circles;
       _results = [];
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         circ_id = _ref1[_i];
         console.log('circ', circ_id);
-        _results.push((function(_this) {
-          return function(circ_id) {
-            return _this.level.set_render_hook(circ_id, {
-              precedence: 0,
-              render: function() {
-                return _this._make_circ(circ_id, 'default');
-              }
-            });
-          };
-        })(this)(circ_id));
+        _results.push((function(circ_id) {
+          return _this.level.set_render_hook(circ_id, {
+            precedence: 0,
+            render: function() {
+              return _this._make_circ(circ_id, 'default');
+            }
+          });
+        })(circ_id));
       }
       return _results;
     };
@@ -2081,28 +2005,24 @@
     };
 
     RadiusFinder.prototype._make_circ = function(circ_id, status) {
+      var _this = this;
       return this._gfx.make_circle(circ_id, {
         status: status,
-        mouseenter: (function(_this) {
-          return function(e) {
-            return _this.hover(circ_id);
-          };
-        })(this),
-        mouseleave: (function(_this) {
-          return function(e) {
-            return _this.hover(null);
-          };
-        })(this),
-        click: (function(_this) {
-          return function(e) {
-            return _this.select(circ_id);
-          };
-        })(this)
+        mouseenter: function(e) {
+          return _this.hover(circ_id);
+        },
+        mouseleave: function(e) {
+          return _this.hover(null);
+        },
+        click: function(e) {
+          return _this.select(circ_id);
+        }
       });
     };
 
     RadiusFinder.prototype.measure = function() {
-      var circ, sel;
+      var circ, sel,
+        _this = this;
       sel = this._selected.get();
       if (sel == null) {
         return null;
@@ -2111,12 +2031,8 @@
       return {
         ref: circ,
         mesg: "Circle of radius " + circ.radius,
-        mouseover: (function(_this) {
-          return function() {};
-        })(this),
-        mouseout: (function(_this) {
-          return function() {};
-        })(this)
+        mouseover: function() {},
+        mouseout: function() {}
       };
     };
 
@@ -2128,9 +2044,11 @@
 
 }).call(this);
 
-},{"events":25,"levels/base.coffee":6,"paths-js/path":23,"svg.coffee":13,"toolbox/graphics.coffee":14,"toolbox/radius_finder_icon.coffee":18}],18:[function(require,module,exports){
+},{"events":26,"levels/base.coffee":6,"paths-js/path":24,"svg.coffee":14,"toolbox/graphics.coffee":15,"toolbox/radius_finder_icon.coffee":19}],19:[function(require,module,exports){
 (function() {
   var Path, RF_SVG_PATHS, SVG, border, dotted_radius, make_icon, s, _ref;
+
+
 
   SVG = require('svg.coffee');
 
@@ -2209,11 +2127,13 @@
 
 }).call(this);
 
-},{"paths-js/path":23,"svg.coffee":13}],19:[function(require,module,exports){
+},{"paths-js/path":24,"svg.coffee":14}],20:[function(require,module,exports){
 (function() {
   var COLOR_ICON, EventEmitter, GRAY_ICON, HookBinding, Path, Point, Ruler, SVG, ToolGraphics, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+
 
   SVG = require('svg.coffee');
 
@@ -2233,19 +2153,16 @@
     __extends(Ruler, _super);
 
     function Ruler(level, level_data, scene) {
+      var _this = this;
       this.level = level;
       this.level_data = level_data;
       this.scene = scene;
-      this._start = new HookBinding(this.level, 3, (function(_this) {
-        return function(pt_id) {
-          return _this._make_node(pt_id, 'selected');
-        };
-      })(this));
-      this._end = new HookBinding(this.level, 3, (function(_this) {
-        return function(pt_id) {
-          return _this._make_node(pt_id, 'selected');
-        };
-      })(this));
+      this._start = new HookBinding(this.level, 3, function(pt_id) {
+        return _this._make_node(pt_id, 'selected');
+      });
+      this._end = new HookBinding(this.level, 3, function(pt_id) {
+        return _this._make_node(pt_id, 'selected');
+      });
       this._gfx = new ToolGraphics(this.level);
     }
 
@@ -2277,33 +2194,30 @@
     };
 
     Ruler.prototype.activate = function() {
-      var pt_id, _fn, _i, _len, _ref1;
+      var pt_id, _fn, _i, _len, _ref1,
+        _this = this;
       _ref1 = this.level_data.points;
-      _fn = (function(_this) {
-        return function(pt_id) {
-          return _this.level.set_render_hook(pt_id, {
-            precedence: 0,
-            render: function() {
-              return _this._make_node(pt_id, 'default');
-            }
-          });
-        };
-      })(this);
+      _fn = function(pt_id) {
+        return _this.level.set_render_hook(pt_id, {
+          precedence: 0,
+          render: function() {
+            return _this._make_node(pt_id, 'default');
+          }
+        });
+      };
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         pt_id = _ref1[_i];
         _fn(pt_id);
       }
-      return this.scene.mousemove((function(_this) {
-        return function(e) {
-          var overlay, start_pt;
-          if ((_this._start.get() == null) || (_this._end.get() != null)) {
-            return;
-          }
-          start_pt = _this.level.get(_this._start.get());
-          overlay = _this._rule_overlay(start_pt, new Point(e.x, e.y));
-          return _this.scene.set_overlay(overlay);
-        };
-      })(this));
+      return this.scene.mousemove(function(e) {
+        var overlay, start_pt;
+        if ((_this._start.get() == null) || (_this._end.get() != null)) {
+          return;
+        }
+        start_pt = _this.level.get(_this._start.get());
+        overlay = _this._rule_overlay(start_pt, new Point(e.x, e.y));
+        return _this.scene.set_overlay(overlay);
+      });
     };
 
     Ruler.prototype.deactivate = function() {
@@ -2335,31 +2249,31 @@
     };
 
     Ruler.prototype._make_node = function(pt_id, status) {
+      var _this = this;
       return this._gfx.make_node(pt_id, {
         status: status,
-        click: (function(_this) {
-          return function(e) {
-            var end, start;
-            start = _this._start.get();
-            end = _this._end.get();
-            console.log('click', start, end, pt_id);
-            if (start == null) {
-              _this.set_start(pt_id);
-            } else if (end == null) {
-              _this.set_end(pt_id);
-            } else {
-              _this.set_start(pt_id);
-              _this.set_end(null);
-              _this.scene.set_overlay(null);
-            }
-            return _this.emit('change');
-          };
-        })(this)
+        click: function(e) {
+          var end, start;
+          start = _this._start.get();
+          end = _this._end.get();
+          console.log('click', start, end, pt_id);
+          if (start == null) {
+            _this.set_start(pt_id);
+          } else if (end == null) {
+            _this.set_end(pt_id);
+          } else {
+            _this.set_start(pt_id);
+            _this.set_end(null);
+            _this.scene.set_overlay(null);
+          }
+          return _this.emit('change');
+        }
       });
     };
 
     Ruler.prototype.measure = function() {
-      var end, len, start;
+      var end, len, start,
+        _this = this;
       start = this._start.get();
       end = this._end.get();
       if ((start == null) || (end == null)) {
@@ -2371,12 +2285,8 @@
       return {
         ref: start,
         mesg: "Length is " + len,
-        mouseover: (function(_this) {
-          return function() {};
-        })(this),
-        mouseout: (function(_this) {
-          return function() {};
-        })(this)
+        mouseover: function() {},
+        mouseout: function() {}
       };
     };
 
@@ -2388,9 +2298,11 @@
 
 }).call(this);
 
-},{"events":25,"geometry.coffee":1,"levels/base.coffee":6,"paths-js/path":23,"svg.coffee":13,"toolbox/graphics.coffee":14,"toolbox/ruler_icon.coffee":20}],20:[function(require,module,exports){
+},{"events":26,"geometry.coffee":1,"levels/base.coffee":6,"paths-js/path":24,"svg.coffee":14,"toolbox/graphics.coffee":15,"toolbox/ruler_icon.coffee":21}],21:[function(require,module,exports){
 (function() {
   var Path, RULER_SVG_PATHS, SVG, border, make_icon, ruler, ticks, _ref;
+
+
 
   SVG = require('svg.coffee');
 
@@ -2474,10 +2386,12 @@
 
 }).call(this);
 
-},{"paths-js/path":23,"svg.coffee":13}],21:[function(require,module,exports){
+},{"paths-js/path":24,"svg.coffee":14}],22:[function(require,module,exports){
 (function() {
   var EventEmitter, Locator, RadiusFinder, Ruler, SVG, ToolBox,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+
 
   SVG = require('svg.coffee');
 
@@ -2489,7 +2403,8 @@
     TMPL = '<div>\n  <div class="toolbox-section tool-selection-area">\n    <div class="tool-title">Tools</div>\n    <div class="tool-selection"></div>\n  </div>\n  <div class="toolbox-section tool-measurement-area">\n    <div class="tool-action-points"></div>\n    <div class="tool-status"></div>\n    <div class="tool-notebook"></div>\n  </div>\n</div>';
 
     function ToolBox(_arg) {
-      var available, default_tool, name, sel_elt, tool, _fn, _ref;
+      var available, default_tool, name, sel_elt, tool, _fn, _ref,
+        _this = this;
       this.level = _arg.level, this.scene = _arg.scene, this.tools = _arg.tools, this.disabled_tools = _arg.disabled_tools, default_tool = _arg.default_tool;
       if (default_tool == null) {
         default_tool = null;
@@ -2503,23 +2418,21 @@
       this._icon_elts = {};
       sel_elt = this._elt.find('.tool-selection');
       _ref = this.tools;
-      _fn = (function(_this) {
-        return function(name, tool) {
-          var container, icon;
-          icon = available ? tool.icons.selected : tool.icons.unselected;
-          container = ($('<div></div>')).addClass('tool-icon').append(icon);
-          _this._icon_elts[name] = container;
-          container.css({
-            opacity: 0.5
+      _fn = function(name, tool) {
+        var container, icon;
+        icon = available ? tool.icons.selected : tool.icons.unselected;
+        container = ($('<div></div>')).addClass('tool-icon').append(icon);
+        _this._icon_elts[name] = container;
+        container.css({
+          opacity: 0.5
+        });
+        if (available) {
+          container.click(function() {
+            return _this.select(name);
           });
-          if (available) {
-            container.click(function() {
-              return _this.select(name);
-            });
-          }
-          return sel_elt.append(container);
-        };
-      })(this);
+        }
+        return sel_elt.append(container);
+      };
       for (name in _ref) {
         tool = _ref[name];
         available = (__indexOf.call(this.disabled_tools, name) < 0);
@@ -2573,25 +2486,24 @@
     };
 
     ToolBox.prototype._activate = function(name) {
-      var tool;
+      var tool,
+        _this = this;
       console.log('activating', name);
       tool = this.tools[name];
       this._icon_elts[name].css({
         opacity: 1.0
       });
       tool.activate();
-      this._on_tool_change = (function(_this) {
-        return function() {
-          var button, status_elt;
-          status_elt = _this._elt.find('.tool-status');
-          status_elt.empty();
-          button = ($('<button>Measure!</button>')).click(_this._do_measure.bind(_this));
-          if (tool.measure() == null) {
-            button.prop('disabled', true);
-          }
-          return status_elt.append(button);
-        };
-      })(this);
+      this._on_tool_change = function() {
+        var button, status_elt;
+        status_elt = _this._elt.find('.tool-status');
+        status_elt.empty();
+        button = ($('<button>Measure!</button>')).click(_this._do_measure.bind(_this));
+        if (tool.measure() == null) {
+          button.prop('disabled', true);
+        }
+        return status_elt.append(button);
+      };
       tool.on('change', this._on_tool_change);
       this._on_tool_change();
       return this.scene.render();
@@ -2632,7 +2544,8 @@
   RadiusFinder = require('toolbox/radius_finder.coffee').RadiusFinder;
 
   exports.setup_tools = function(scene, level, player_tools) {
-    var TOOLS, disabled_tools, name, tool, tool_data, tool_type, tools;
+    var TOOLS, disabled_tools, name, tool, tool_data, tool_type, tools,
+      _this = this;
     TOOLS = {
       locator: Locator,
       ruler: Ruler,
@@ -2651,11 +2564,9 @@
       }
       tool = new tool_type(level, tool_data, scene);
       tools[name] = tool;
-      tool.on('change', (function(_this) {
-        return function() {
-          return scene.render();
-        };
-      })(this));
+      tool.on('change', function() {
+        return scene.render();
+      });
     }
     return {
       toolbox: new ToolBox({
@@ -2671,7 +2582,7 @@
 
 }).call(this);
 
-},{"events":25,"svg.coffee":13,"toolbox/locator.coffee":15,"toolbox/radius_finder.coffee":17,"toolbox/ruler.coffee":19}],22:[function(require,module,exports){
+},{"events":26,"svg.coffee":14,"toolbox/locator.coffee":16,"toolbox/radius_finder.coffee":18,"toolbox/ruler.coffee":20}],23:[function(require,module,exports){
 /*!
  * mustache.js - Logic-less {{mustache}} templates with JavaScript
  * http://github.com/janl/mustache.js
@@ -3243,7 +3154,7 @@
 
 }));
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function (global){
 // Generated by uRequire v{NO_VERSION} - template: 'nodejs' 
 (function (window, global) {
@@ -3517,7 +3428,7 @@ module.exports = (function () {
 
 }).call(this, (typeof exports === 'object' ? global : window), (typeof exports === 'object' ? global : window))
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -3879,7 +3790,7 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":29}],25:[function(require,module,exports){
+},{"util/":30}],26:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4182,7 +4093,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -4207,7 +4118,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -4215,6 +4126,8 @@ var process = module.exports = {};
 process.nextTick = (function () {
     var canSetImmediate = typeof window !== 'undefined'
     && window.setImmediate;
+    var canMutationObserver = typeof window !== 'undefined'
+    && window.MutationObserver;
     var canPost = typeof window !== 'undefined'
     && window.postMessage && window.addEventListener
     ;
@@ -4223,8 +4136,29 @@ process.nextTick = (function () {
         return function (f) { return window.setImmediate(f) };
     }
 
+    var queue = [];
+
+    if (canMutationObserver) {
+        var hiddenDiv = document.createElement("div");
+        var observer = new MutationObserver(function () {
+            var queueList = queue.slice();
+            queue.length = 0;
+            queueList.forEach(function (fn) {
+                fn();
+            });
+        });
+
+        observer.observe(hiddenDiv, { attributes: true });
+
+        return function nextTick(fn) {
+            if (!queue.length) {
+                hiddenDiv.setAttribute('yes', 'no');
+            }
+            queue.push(fn);
+        };
+    }
+
     if (canPost) {
-        var queue = [];
         window.addEventListener('message', function (ev) {
             var source = ev.source;
             if ((source === window || source === null) && ev.data === 'process-tick') {
@@ -4264,7 +4198,7 @@ process.emit = noop;
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
-}
+};
 
 // TODO(shtylman)
 process.cwd = function () { return '/' };
@@ -4272,14 +4206,14 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -4869,9 +4803,11 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":28,"_process":27,"inherits":26}],30:[function(require,module,exports){
+},{"./support/isBuffer":29,"_process":28,"inherits":27}],31:[function(require,module,exports){
 (function() {
   var $ajax, LevelLoader, SVG, Scene, ShapeMaker, ToolBox, report_score, setup_tools, _ref;
+
+
 
   SVG = require('svg.coffee');
 
@@ -4896,7 +4832,8 @@ function hasOwnProperty(obj, prop) {
     };
 
     function Scene(level) {
-      var xform_str;
+      var xform_str,
+        _this = this;
       this.level = level;
       this.svg = SVG.root(this.level.dims.width, this.level.dims.height);
       xform_str = "translate(" + this.level.dims.offset_x + ", " + this.level.dims.offset_y + ") scale(1, -1)";
@@ -4906,17 +4843,15 @@ function hasOwnProperty(obj, prop) {
       this.svg.appendChild(this.xform);
       this._overlay = null;
       this._mousemove_handler = null;
-      ($(this.svg)).mousemove((function(_this) {
-        return function(e) {
-          if (_this._mousemove_handler != null) {
-            e = standardize_evt(e);
-            e.x -= _this.level.dims.offset_x;
-            e.y -= _this.level.dims.offset_y;
-            e.y = -e.y;
-            return _this._mousemove_handler(e);
-          }
-        };
-      })(this));
+      ($(this.svg)).mousemove(function(e) {
+        if (_this._mousemove_handler != null) {
+          e = standardize_evt(e);
+          e.x -= _this.level.dims.offset_x;
+          e.y -= _this.level.dims.offset_y;
+          e.y = -e.y;
+          return _this._mousemove_handler(e);
+        }
+      });
     }
 
     Scene.prototype.mousemove = function(_mousemove_handler) {
@@ -4943,7 +4878,8 @@ function hasOwnProperty(obj, prop) {
     };
 
     Scene.prototype.animate_overlay = function(_arg) {
-      var duration, fps, interval_id, on_end, on_tick, start, tick;
+      var duration, fps, interval_id, on_end, on_tick, start, tick,
+        _this = this;
       fps = _arg.fps, duration = _arg.duration, on_tick = _arg.on_tick, on_end = _arg.on_end;
       if (fps == null) {
         fps = 40;
@@ -4951,22 +4887,18 @@ function hasOwnProperty(obj, prop) {
       tick = 1000 / fps;
       start = (new Date).valueOf();
       this._overlay = SVG.g({});
-      interval_id = setInterval(((function(_this) {
-        return function() {
-          var elapsed, now;
-          now = (new Date).valueOf();
-          elapsed = (now - start) / duration;
-          _this._overlay = on_tick(elapsed);
-          return _this.render();
-        };
-      })(this)), tick);
-      return setTimeout(((function(_this) {
-        return function() {
-          clearInterval(interval_id);
-          _this._overlay = on_end();
-          return _this.render();
-        };
-      })(this)), duration);
+      interval_id = setInterval((function() {
+        var elapsed, now;
+        now = (new Date).valueOf();
+        elapsed = (now - start) / duration;
+        _this._overlay = on_tick(elapsed);
+        return _this.render();
+      }), tick);
+      return setTimeout((function() {
+        clearInterval(interval_id);
+        _this._overlay = on_end();
+        return _this.render();
+      }), duration);
     };
 
     return Scene;
@@ -4985,7 +4917,8 @@ function hasOwnProperty(obj, prop) {
   };
 
   window.onload = function() {
-    var RIGHT_GREEN, SCORE_TO_MESG, WRONG_RED, level, level_id, scene, sm, tb, title, tools;
+    var RIGHT_GREEN, SCORE_TO_MESG, WRONG_RED, level, level_id, scene, sm, tb, title, tools,
+      _this = this;
     level_id = window.location.hash.slice(1);
     level = LevelLoader.load(level_id);
     if (level == null) {
@@ -5008,64 +4941,60 @@ function hasOwnProperty(obj, prop) {
       2: 'Great! \u2605\u2605\u2606',
       3: 'Perfect! \u2605\u2605\u2605'
     };
-    sm = new ShapeMaker(level.input_shape, (function(_this) {
-      return function(shape) {
-        var color, disp_text, ease, final_color, label_pos, score, text_elt;
-        score = level.evaluate(shape).score;
-        report_score(score, level_id);
-        color = score === -1 ? WRONG_RED : RIGHT_GREEN;
-        disp_text = SCORE_TO_MESG[score];
-        label_pos = shape.label();
-        text_elt = SVG.text({
-          x: label_pos.x,
-          y: -label_pos.y,
-          'font-family': 'sans-serif',
-          'font-size': '16px',
-          fill: 'black',
-          transform: "scale(1, -1)",
-          'text-anchor': 'middle'
-        });
-        text_elt.innerHTML = disp_text;
-        ease = function(x) {
-          var f;
-          f = function(t) {
-            return t * t * t;
-          };
-          return (f(x) - f(0)) / (f(1) - f(0));
+    sm = new ShapeMaker(level.input_shape, function(shape) {
+      var color, disp_text, ease, final_color, label_pos, score, text_elt;
+      score = level.evaluate(shape).score;
+      report_score(score, level_id);
+      color = score === -1 ? WRONG_RED : RIGHT_GREEN;
+      disp_text = SCORE_TO_MESG[score];
+      label_pos = shape.label();
+      text_elt = SVG.text({
+        x: label_pos.x,
+        y: -label_pos.y,
+        'font-family': 'sans-serif',
+        'font-size': '16px',
+        fill: 'black',
+        transform: "scale(1, -1)",
+        'text-anchor': 'middle'
+      });
+      text_elt.innerHTML = disp_text;
+      ease = function(x) {
+        var f;
+        f = function(t) {
+          return t * t * t;
         };
-        final_color = (typeof opt !== "undefined" && opt !== null) && score >= 0.9999 * opt ? 'gold' : 'black';
-        return scene.animate_overlay({
-          fps: 40,
-          duration: 400,
-          on_tick: function(elapsed) {
-            return SVG.attrs(shape.svg(), {
-              opacity: 0.1 + 0.8 * (ease(elapsed)),
+        return (f(x) - f(0)) / (f(1) - f(0));
+      };
+      final_color = (typeof opt !== "undefined" && opt !== null) && score >= 0.9999 * opt ? 'gold' : 'black';
+      return scene.animate_overlay({
+        fps: 40,
+        duration: 400,
+        on_tick: function(elapsed) {
+          return SVG.attrs(shape.svg(), {
+            opacity: 0.1 + 0.8 * (ease(elapsed)),
+            fill: color,
+            stroke: 'black'
+          });
+        },
+        on_end: function() {
+          return SVG.g({}, [
+            SVG.attrs(shape.svg(), {
+              opacity: 0.9,
               fill: color,
-              stroke: 'black'
-            });
-          },
-          on_end: function() {
-            return SVG.g({}, [
-              SVG.attrs(shape.svg(), {
-                opacity: 0.9,
-                fill: color,
-                stroke: final_color
-              }), text_elt
-            ]);
-          }
-        });
-      };
-    })(this));
-    title = ($('<div class="app-title">Slice</div>')).click((function(_this) {
-      return function() {
-        return window.location.href = "/";
-      };
-    })(this));
+              stroke: final_color
+            }), text_elt
+          ]);
+        }
+      });
+    });
+    title = ($('<div class="app-title">Slice</div>')).click(function() {
+      return window.location.href = "/";
+    });
     ($('.right-panel')).prepend(title);
     return ($('.right-panel')).append(sm.elt());
   };
 
 }).call(this);
 
-},{"http_util.coffee":2,"input/shape_maker.coffee":4,"levels/loader.coffee":12,"svg.coffee":13,"toolbox/toolbox.coffee":21}]},{},[30]);
+},{"http_util.coffee":2,"input/shape_maker.coffee":4,"levels/loader.coffee":12,"svg.coffee":14,"toolbox/toolbox.coffee":22}]},{},[31]);
 

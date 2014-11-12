@@ -12,11 +12,9 @@ SCORER = new TieredScorer [
 ], (1 + 2 * EPS)
 
 exports.Level3 = new BaseLevel {
-  allowed_tools: {
-    locator: {
+  allowed_tools:
+    locator:
       points: (('p' + idx) for idx in [0...3])
-    }
-  }
   input_shape: CircleShape
 
   dims: {
@@ -41,30 +39,6 @@ exports.Level3 = new BaseLevel {
     @add 'figure', fig
     for pt, idx in fig.points()
       @add ('p' + idx), pt
-
-  # TODO: factor out some of the rendering
-  render_figure: ->
-    d = SVG.util.make_closed_path @entities.figure.points()
-    return SVG.path {
-      d: d, fill: 'blue', opacity: 0.2
-    }
-
-  render_nodes: ->
-    nodes = []
-    for pt, idx in @entities.figure.points()
-      hook = @get_hook ('p' + idx)
-      if hook?
-        nodes.push hook.render()
-      else
-        nodes.push (SVG.circle {
-          cx: pt.x, cy: pt.y, r: 5, fill: 'red', stroke: 'black'
-        })
-    return SVG.g {}, nodes
-
-  render: (container) ->
-    container.appendChild @render_background()
-    container.appendChild @render_figure()
-    container.appendChild @render_nodes()
 
   evaluate: (shape) ->
     fig = @entities.figure

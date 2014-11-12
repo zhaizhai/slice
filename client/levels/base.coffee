@@ -1,50 +1,13 @@
 SVG = require 'svg.coffee'
 Path = require 'paths-js/path'
-{Point, Polygon} = require 'geometry.coffee'
+{Point, Polygon, Circle} = require 'geometry.coffee'
 
-exports.make_axes = make_axes = (dims) ->
-  [left, right] = [-dims.offset_x, dims.width - dims.offset_x]
-  [bottom, top] = [-dims.height + dims.offset_y, dims.offset_y]
-
-  [left, right] = [left + 2, right - 2]
-  [bottom, top] = [bottom + 2, top - 2]
-
-  x_axis = Path().moveto left, 0
-  x_axis = x_axis.lineto right, 0
-  x_axis = SVG.util.arrow x_axis, {
-    tip: (new Point right, 0),
-    length: 8, angle: 20, direction: 0
-  }
-  x_axis = SVG.util.arrow x_axis, {
-    tip: (new Point left, 0),
-    length: 8, angle: 20, direction: 180
-  }
-
-  y_axis = Path().moveto 0, bottom
-  y_axis = y_axis.lineto 0, top
-  y_axis = SVG.util.arrow y_axis, {
-    tip: (new Point 0, top),
-    length: 8, angle: 20, direction: 90
-  }
-  y_axis = SVG.util.arrow y_axis, {
-    tip: (new Point 0, bottom),
-    length: 8, angle: 20, direction: 270
-  }
-
-  return SVG.g {}, [
-    SVG.path {
-      d: x_axis.print(), stroke: 'black',
-      opacity: 0.4
-    }
-    SVG.path {
-      d: y_axis.print(), stroke: 'black',
-      opacity: 0.4
-    }
-  ]
+{make_axes, DEFAULT_RENDERERS} = require 'levels/render.coffee'
 
 class BaseLevel
   REQUIRED_PROPS = [
-    'dims', 'generate', 'evaluate', 'allowed_tools', 'input_shape',
+    'dims', 'generate', 'evaluate', 'allowed_tools',
+    'input_shape',
   ]
 
   constructor: (opts) ->
@@ -90,6 +53,38 @@ class BaseLevel
 
   render_background: ->
     return make_axes @dims
+
+  render: (container) ->
+    layer_names = ['shape', 'circle', 'node']
+    layers = {}
+    for name in layer_names
+      layers[name] = []
+
+    ENTITY_TYPE = (ent) ->
+      if ent instanceof Point
+        return 'node'
+      else if ent instanceof Polygon
+        return 'shape'
+      else if ent instanceof Circle
+        return 'circle'
+      # TODO
+      console.log 'invalid', ent
+      throw new Error "Invalid entity #{ent}"
+
+    for k, v of @entities
+      type = ENTITY_TYPE v
+      hook = @get_hook k
+      elt = if hook?
+        hook.render()
+      else
+        DEFAULT_RENDERERS[type] v
+      layers[type].push elt
+
+    container.appendChild @render_background()
+    for name in layer_names
+      layer = SVG.g {}, layers[name]
+      container.appendChild layer
+
 
 class HookBinding
   constructor: (@level, @precedence, @hook_fn) ->

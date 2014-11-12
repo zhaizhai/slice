@@ -103,6 +103,7 @@ class Polygon
           return true
     return false
 
+  # TODO: this algorithm is not actually correct for non-convex shapes
   contains: (pt, opts = {}) ->
     {buffer} = opts
     buffer ?= 0
