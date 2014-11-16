@@ -2,6 +2,7 @@
 {Level2} = require 'levels/level2.coffee'
 {Level3} = require 'levels/level3.coffee'
 {Level4} = require 'levels/level4.coffee'
+{Level5} = require 'levels/level5.coffee'
 
 rand_int = (n) ->
   return Math.floor (Math.random() * n)
@@ -13,6 +14,7 @@ LEVELS =
   l2: Level2
   l3: Level3
   l4: Level4
+  l5: Level5
 
 exports.load = (lname) ->
   level = LEVELS[lname]

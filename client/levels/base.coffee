@@ -48,6 +48,7 @@ class BaseLevel
 
   add: (k, v) ->
     @entities[k] = v
+    return v
   get: (k) ->
     return @entities[k]
 

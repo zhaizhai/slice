@@ -2,8 +2,6 @@
 (function() {
   var Circle, EPSILON, Point, Polygon, Segment, assert;
 
-
-
   assert = require('assert');
 
   exports.EPSILON = EPSILON = 0.001;
@@ -224,8 +222,6 @@
 (function() {
   var $ajax, assert;
 
-
-
   assert = require('assert');
 
   exports.$ajax = $ajax = function(endpoint, data, req_type, cb) {
@@ -272,16 +268,13 @@
 (function() {
   var LevelContainer, LevelDisplay;
 
-
-
   LevelDisplay = (function() {
     var TMPL;
 
     TMPL = '<div class="level-row">\n  <div class="disp-tc level-name"></div>\n  <div class="disp-tc level-progress"></div>\n</div>';
 
     function LevelDisplay(level_info, show_detail) {
-      var attempt_button, i, progress_txt, _i,
-        _this = this;
+      var attempt_button, i, progress_txt, _i;
       this.level_info = level_info;
       this.show_detail = show_detail != null ? show_detail : false;
       this._elt = $(TMPL);
@@ -295,9 +288,11 @@
         }
       }
       if (this.show_detail) {
-        attempt_button = ($('<button>Attempt</button>')).click(function() {
-          return window.location.href = "level\#" + _this.level_info.level_id;
-        });
+        attempt_button = ($('<button>Attempt</button>')).click((function(_this) {
+          return function() {
+            return window.location.href = "level\#" + _this.level_info.level_id;
+          };
+        })(this));
         (this._elt.find('div.level-progress')).append(attempt_button);
         this._elt.css({
           'background-color': '#cccccc'
@@ -305,11 +300,15 @@
       } else {
         (this._elt.find('div.level-progress')).text(progress_txt);
       }
-      this._elt.hover((function() {
-        return _this._hover_in();
-      }), (function() {
-        return _this._hover_out();
-      }));
+      this._elt.hover(((function(_this) {
+        return function() {
+          return _this._hover_in();
+        };
+      })(this)), ((function(_this) {
+        return function() {
+          return _this._hover_out();
+        };
+      })(this)));
     }
 
     LevelDisplay.prototype.elt = function() {
@@ -359,16 +358,17 @@
     };
 
     LevelContainer.prototype.refresh = function() {
-      var info, level_disp, level_id, show_detail, _fn, _i, _len, _ref, _results,
-        _this = this;
+      var info, level_disp, level_id, show_detail, _fn, _i, _len, _ref, _results;
       this._elt.empty();
       _ref = this.levels;
-      _fn = function(level_id) {
-        return level_disp.elt().click(function() {
-          _this.select(level_id);
-          return _this.refresh();
-        });
-      };
+      _fn = (function(_this) {
+        return function(level_id) {
+          return level_disp.elt().click(function() {
+            _this.select(level_id);
+            return _this.refresh();
+          });
+        };
+      })(this);
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         info = _ref[_i];
@@ -393,8 +393,6 @@
 (function() {
   var $ajax, ALL_TOOLS, CHECKMARK_SVG, ICONS, Path, SVG, ToolContainer, ToolIcon, mustache, render_to_jq,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-
 
   mustache = require('mustache');
 
@@ -461,8 +459,7 @@
     };
 
     ToolContainer.prototype._set_description = function(tool_name, tool_info) {
-      var buy_button, desc,
-        _this = this;
+      var buy_button, desc;
       this._tool_desc.empty();
       desc = render_to_jq(TOOL_DESC, {
         name: tool_info.name,
@@ -472,9 +469,11 @@
       if (__indexOf.call(this.player_info.tools, tool_name) >= 0) {
         return;
       }
-      buy_button = ($('<button>Buy</button>')).click(function() {
-        return _this._buy(tool_name);
-      });
+      buy_button = ($('<button>Buy</button>')).click((function(_this) {
+        return function() {
+          return _this._buy(tool_name);
+        };
+      })(this));
       this._tool_desc.append(buy_button);
       if (!(this._can_buy(tool_name))) {
         return buy_button.prop('disabled', true);
@@ -489,35 +488,37 @@
     };
 
     ToolContainer.prototype._buy = function(tool_name) {
-      var _this = this;
       return $ajax.post('/buy', {
         tool_id: tool_name
-      }, function(err, res) {
-        var message, new_user_info, success, _ref1;
-        console.log(err, res);
-        _ref1 = JSON.parse(res), success = _ref1.success, message = _ref1.message, new_user_info = _ref1.new_user_info;
-        if (!success) {
-          throw new Error(message);
-        }
-        _this.player_info.tools = new_user_info.Tools;
-        _this.player_info.gold = new_user_info.Gold;
-        ($(document.body)).find('.gold-count').text("Gold: " + _this.player_info.gold);
-        return _this.refresh();
-      });
+      }, (function(_this) {
+        return function(err, res) {
+          var message, new_user_info, success, _ref1;
+          console.log(err, res);
+          _ref1 = JSON.parse(res), success = _ref1.success, message = _ref1.message, new_user_info = _ref1.new_user_info;
+          if (!success) {
+            throw new Error(message);
+          }
+          _this.player_info.tools = new_user_info.Tools;
+          _this.player_info.gold = new_user_info.Gold;
+          ($(document.body)).find('.gold-count').text("Gold: " + _this.player_info.gold);
+          return _this.refresh();
+        };
+      })(this));
     };
 
     ToolContainer.prototype.refresh = function() {
-      var col, highlighted, icon, icon_elt, owned, row, tool_info, tool_name, _fn, _i, _len, _ref1, _results,
-        _this = this;
+      var col, highlighted, icon, icon_elt, owned, row, tool_info, tool_name, _fn, _i, _len, _ref1, _results;
       this._tool_container.empty();
       this._tool_desc.empty();
       _ref1 = [0, 0], row = _ref1[0], col = _ref1[1];
-      _fn = function(tool_name) {
-        return icon_elt.click(function() {
-          _this.select(tool_name);
-          return _this.refresh();
-        });
-      };
+      _fn = (function(_this) {
+        return function(tool_name) {
+          return icon_elt.click(function() {
+            _this.select(tool_name);
+            return _this.refresh();
+          });
+        };
+      })(this);
       _results = [];
       for (_i = 0, _len = ALL_TOOLS.length; _i < _len; _i++) {
         tool_name = ALL_TOOLS[_i];
@@ -630,8 +631,6 @@
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __slice = [].slice;
 
-
-
   assert = require('assert');
 
   Path = require('paths-js/path');
@@ -639,8 +638,7 @@
   Point = require('geometry.coffee').Point;
 
   SVG = (function() {
-    var MOUSE_EVTS, PRIMITIVES, SVG_NS, create_elt, make_primitive, prim, _i, _len,
-      _this = this;
+    var MOUSE_EVTS, PRIMITIVES, SVG_NS, create_elt, make_primitive, prim, _i, _len;
 
     function SVG() {}
 
@@ -707,7 +705,7 @@
 
     return SVG;
 
-  }).call(this);
+  })();
 
   to_radians = function(deg) {
     return Math.PI * deg / 180;
@@ -749,8 +747,6 @@
 },{"assert":11,"geometry.coffee":1,"paths-js/path":10}],6:[function(require,module,exports){
 (function() {
   var LOCATOR_SVG_PATHS, Path, SVG, border, cross, make_icon, ticks, _ref;
-
-
 
   SVG = require('svg.coffee');
 
@@ -845,8 +841,6 @@
 (function() {
   var Path, RF_SVG_PATHS, SVG, border, dotted_radius, make_icon, s, _ref;
 
-
-
   SVG = require('svg.coffee');
 
   Path = require('paths-js/path');
@@ -927,8 +921,6 @@
 },{"paths-js/path":10,"svg.coffee":5}],8:[function(require,module,exports){
 (function() {
   var Path, RULER_SVG_PATHS, SVG, border, make_icon, ruler, ticks, _ref;
-
-
 
   SVG = require('svg.coffee');
 
@@ -2253,8 +2245,6 @@ var process = module.exports = {};
 process.nextTick = (function () {
     var canSetImmediate = typeof window !== 'undefined'
     && window.setImmediate;
-    var canMutationObserver = typeof window !== 'undefined'
-    && window.MutationObserver;
     var canPost = typeof window !== 'undefined'
     && window.postMessage && window.addEventListener
     ;
@@ -2263,29 +2253,8 @@ process.nextTick = (function () {
         return function (f) { return window.setImmediate(f) };
     }
 
-    var queue = [];
-
-    if (canMutationObserver) {
-        var hiddenDiv = document.createElement("div");
-        var observer = new MutationObserver(function () {
-            var queueList = queue.slice();
-            queue.length = 0;
-            queueList.forEach(function (fn) {
-                fn();
-            });
-        });
-
-        observer.observe(hiddenDiv, { attributes: true });
-
-        return function nextTick(fn) {
-            if (!queue.length) {
-                hiddenDiv.setAttribute('yes', 'no');
-            }
-            queue.push(fn);
-        };
-    }
-
     if (canPost) {
+        var queue = [];
         window.addEventListener('message', function (ev) {
             var source = ev.source;
             if ((source === window || source === null) && ev.data === 'process-tick') {
@@ -2325,7 +2294,7 @@ process.emit = noop;
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
-};
+}
 
 // TODO(shtylman)
 process.cwd = function () { return '/' };
@@ -2933,8 +2902,6 @@ function hasOwnProperty(obj, prop) {
 },{"./support/isBuffer":14,"_process":13,"inherits":12}],16:[function(require,module,exports){
 (function() {
   var ICONS, LevelContainer, LevelInfo, PlayerInfo, ToolContainer;
-
-
 
   ToolContainer = require('shop/toolshop.coffee').ToolContainer;
 

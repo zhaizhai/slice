@@ -130,11 +130,6 @@ window.onload = ->
       f = (t) -> (t * t * t)
       return (f(x) - f(0)) / (f(1) - f(0))
 
-
-    final_color = if opt? and score >= 0.9999 * opt
-      'gold'
-    else
-      'black'
     scene.animate_overlay {
       fps: 40, duration: 400,
       on_tick: (elapsed) =>
@@ -146,7 +141,7 @@ window.onload = ->
         return SVG.g {}, [
           SVG.attrs shape.svg(), {
             opacity: 0.9,
-            fill: color, stroke: final_color
+            fill: color, stroke: 'black'
           }
           text_elt
         ]

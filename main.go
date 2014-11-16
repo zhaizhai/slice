@@ -85,6 +85,11 @@ func getInfoForUser(c appengine.Context, u *user.User) (*model.UserInfo, error) 
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		if ret.Tools == nil {
+			// TODO: appengine apparently stores empty lists as null
+			ret.Tools = make([]string, 0)
+		}
 	}
 
 	return ret, nil
